@@ -8,7 +8,7 @@
 #' @param meta.output please keep the default value. boolean value to modiy the output file. If TRUE, the GxE effect estimate and variance and covariance associated with the effect estimate are included in the output file. (default = FALSE)
 #' @param center If TRUE, genotypes will be centered before tests. Otherwise, original values will be used in the tests (default = TRUE)
 #' @param MAF.range a numeric vector of length 2 defining the minimum and maximum minor allele frequencies of variants that should be included in the analysis (default = c(0.01, 0.5), i.e. common variants).
-#' @param related.id a numeric vector contains family id starting from 1
+#' @param related.id a numeric or a character vector contains family id
 #' @param miss.cutoff the maximum missing rate allowed for a variant to be included (default = 1, including all variants)
 #' @param missing.method method of handling missing genotypes.Either "impute2mean" or "omit" (default = "impute2mean") [TBT]
 #' @param nperbatch an positive integer for how many SNPs should be tested in a batch (default = 100). 
@@ -17,6 +17,19 @@
 #' @export
 glmm.gei.sw = function(null.obj, interaction, geno.file, outdir, interaction.covariates=NULL, meta.output=F, center=T, 
     MAF.range = c(0.01, 0.5), related.id,  miss.cutoff = 1, missing.method = "impute2mean", nperbatch = 100, ncores = 1, verbose = FALSE){
+
+    if(Sys.info()["sysname"] == "Windows" && ncores > 1) {
+        warning("The package doMC is not available on Windows... Switching to single thread...")
+        ncores <- 1
+    }
+
+    Sys.setenv(MKL_NUM_THREADS = 1)
+
+    if(!grepl("\\.gds$|\\.bgen$", geno.file[1])) stop("Error: only .gds and .bgen format is supported in geno.file!")
+    if(grepl("\\.bgen$", geno.file[1])) stop("Error: currently geno.file must be .gds, .bgen format not yet supported...")
+    if(!inherits(null.obj, c("glmmkin", "glmmkin.multi"))) stop("Error: null.obj must be a class glmmkin or glmmkin.multi object!")
+    if(inherits(null.obj,"glmmkin.multi")) stop("Error: currently null.obj must be a class glmmkin object, glmmkin.multi not yet supported...")
+
     if (!dir.exists(outdir)){
         dir.create(outdir)
     } else {
@@ -24,12 +37,17 @@ glmm.gei.sw = function(null.obj, interaction, geno.file, outdir, interaction.cov
     }   
     # data manipulation and cleaning
     n.pheno <- null.obj$n.pheno # types of phenotype
+
+    missing.method <- try(match.arg(missing.method, c("impute2mean", "omit")))
+    if(inherits(missing.method,"try-error")) stop("Error: \"missing.method\" must be \"impute2mean\" or \"omit\".")
+    if(!inherits(interaction, c("integer", "numeric", "character"))) stop("Error: \"interaction\" should be an integer, numeric, or character vector.")
+
     residuals <- null.obj$scaled.residuals
     ei <- length(interaction)
     qi <- length(interaction.covariates)
     ei1 <- ei+1
     nfam = length(unique(related.id))
-    print(nfam)
+    print(paste0("There are ", nfam, "families"))
     if(inherits(interaction,"character")) {
         if(!is.null(interaction.covariates)) {
             if(any(interaction.covariates %in% interaction)) {stop("there are interaction.covariates also specified as interaction.")}
@@ -44,6 +62,10 @@ glmm.gei.sw = function(null.obj, interaction, geno.file, outdir, interaction.cov
         }
         E <- as.matrix(null.obj$X[,interaction+1])
     }
+
+    ncores <- min(c(ncores, parallel::detectCores(logical = TRUE)))
+    J <- NULL
+
     if (!inherits(geno.file, "SeqVarGDSClass")) {
       gds <- SeqArray::seqOpen(geno.file) 
     } else {
@@ -302,10 +324,7 @@ glmm.gei.sw = function(null.obj, interaction, geno.file, outdir, interaction.cov
                 
                         true_Residuals = residuals - crossprod(t(PK),(rep(1, ncolE) %x% diag(ng)) * as.vector(tcrossprod(crossprod(residuals,K),IV.V_i))) # residual adjusted for X, G and K. Dim: N x nperbatch (np)
                         true_Score = as.matrix(matrix(GK_X, ncol = (ei1+qi)*ng) * true_Residuals) # N * (pxei+p)
-                        # use residuals
-                        #GKt %*% crossprod residuals (block matrix based on cluster membership) %*% GK
-                        # sparseMatrix
-                        #true_score = rowsum(true_Score, related.id) #joint nfam*(pxei+p)
+                        
                         M = tcrossprod(crossprod(true_Score, sparsej))
                         
                         batchindex = rep(((0:((ei1+qi)*ng-1)) * (ei1+qi)*ng),each=(ei1+qi))+rep(rep((0:(ng-1)),each=(ei1+qi)),(ei1+qi))+rep(seq(1,(ei1+qi)*ng,by=ng),(ei1+qi)*ng)
@@ -596,10 +615,7 @@ glmm.gei.sw = function(null.obj, interaction, geno.file, outdir, interaction.cov
   
           true_Residuals = residuals - crossprod(t(PK),(rep(1, ncolE) %x% diag(ng)) * as.vector(tcrossprod(crossprod(residuals,K),IV.V_i))) # residual adjusted for X, G and K. Dim: N x nperbatch (np)
           true_Score = as.matrix(matrix(GK_X, ncol = (ei1+qi)*ng) * true_Residuals) # N * (pxei+p)
-          # use residuals
-          #GKt %*% crossprod residuals (block matrix based on cluster membership) %*% GK
-          # sparseMatrix
-          #true_score = rowsum(true_Score, related.id) #joint nfam*(pxei+p)
+         
           M = tcrossprod(crossprod(true_Score, sparsej))
           
           batchindex = rep(((0:((ei1+qi)*ng-1)) * (ei1+qi)*ng),each=(ei1+qi))+rep(rep((0:(ng-1)),each=(ei1+qi)),(ei1+qi))+rep(seq(1,(ei1+qi)*ng,by=ng),(ei1+qi)*ng)

@@ -38,7 +38,7 @@ glmm.gei.sw(
 
 \item{MAF.range}{a numeric vector of length 2 defining the minimum and maximum minor allele frequencies of variants that should be included in the analysis (default = c(0.01, 0.5), i.e. common variants).}
 
-\item{related.id}{a numeric vector contains family id starting from 1}
+\item{related.id}{a numeric or a character vector contains family id}
 
 \item{miss.cutoff}{the maximum missing rate allowed for a variant to be included (default = 1, including all variants)}
 

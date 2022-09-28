@@ -1,5 +1,5 @@
 Package: MARGEE
-Title: What the Package Does (One Line, Title Case)
+Title: Mixed-model Association Robust tests for GEne–Environment interactions
 Version: 0.1.0
 Authors@R: 
     person(given = "Mengyu", 
