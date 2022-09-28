@@ -1,0 +1,18 @@
+Package: MARGEE
+Title: What the Package Does (One Line, Title Case)
+Version: 0.1.0
+Authors@R: 
+    person(given = "Mengyu", 
+    family = "Zhang", 
+    role = c("aut", "cre"), 
+    email = "mengyu.zhang@uth.tmc.edu", 
+    comment = c(ORCID = "0000-0002-5545-0354"))
+Description: Perform generalized linear mixed robust single-variant main effect tests, gene-environment interaction tests.
+License: `use_gpl3_license()`
+Imports: Rcpp, Matrix, parallel, MASS, SeqArray, SeqVarTools, foreach,
+        GMMAT, CompQuadForm
+Suggests: doMC
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.1
