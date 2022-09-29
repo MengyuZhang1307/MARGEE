@@ -9,8 +9,7 @@ Authors@R:
     comment = c(ORCID = "0000-0002-5545-0354"))
 Description: Perform generalized linear mixed robust single-variant main effect tests, gene-environment interaction tests.
 License: `use_gpl3_license()`
-Imports: Rcpp, Matrix, parallel, MASS, SeqArray, SeqVarTools, foreach,
-        GMMAT, CompQuadForm
+Imports: Rcpp, Matrix, parallel, MASS, SeqArray, SeqVarTools, foreach, GMMAT, CompQuadForm
 Suggests: doMC
 Encoding: UTF-8
 LazyData: true
