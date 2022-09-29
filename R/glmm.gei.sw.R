@@ -47,7 +47,7 @@ glmm.gei.sw = function(null.obj, interaction, geno.file, outdir, interaction.cov
     qi <- length(interaction.covariates)
     ei1 <- ei+1
     nfam = length(unique(related.id))
-    print(paste0("There are ", nfam, "families"))
+    print(paste0("There are ", nfam, " families"))
     if(inherits(interaction,"character")) {
         if(!is.null(interaction.covariates)) {
             if(any(interaction.covariates %in% interaction)) {stop("there are interaction.covariates also specified as interaction.")}
