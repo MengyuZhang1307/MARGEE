@@ -490,31 +490,33 @@ glmm.gei.sw = function(null.obj, interaction, geno.file, outdir, interaction.cov
         rm(alleles.list)
         tmp_idx <- 1
         tmp.out <- lapply(1:((tmp.p-1) %/% nperbatch + 1), function(j) {
-          tmp2.variant.idx <- if(j == (tmp.p-1) %/% nperbatch + 1) tmp.variant.idx[((j-1)*nperbatch+1):tmp.p] else tmp.variant.idx[((j-1)*nperbatch+1):(j*nperbatch)]
-          SeqArray::seqSetFilter(gds, variant.id = tmp2.variant.idx, verbose = FALSE)
-          geno <- SeqVarTools::altDosage(gds, use.names = FALSE)
-          ng <- ncol(geno)
-          freq <- colMeans(geno, na.rm = TRUE)/2
+          if(j == (tmp.p-1) %/% nperbatch + 1) {
+            tmp2.variant.idx = tmp.variant.idx[((j-1)*nperbatch+1):tmp.p]
+          }  else {
+            tmp2.variant.idx = tmp.variant.idx[((j-1)*nperbatch+1):(j*nperbatch)]
+          }   
+        SeqArray::seqSetFilter(gds, variant.id = tmp2.variant.idx, verbose = FALSE)
+        geno <- SeqVarTools::altDosage(gds, use.names = FALSE)
+        ng <- ncol(geno)
+        freq <- colMeans(geno, na.rm = TRUE)/2
 
-          if(any(duplicated(null.obj$id_include))) geno <- crossprod(J, geno)
+        if(any(duplicated(null.obj$id_include))) geno <- crossprod(J, geno)
 
-          N <- nrow(geno) - colSums(is.na(geno))
-          if(!is.null(strata.list)) { # E is not continuous
+        N <- nrow(geno) - colSums(is.na(geno))
+        if(!is.null(strata.list)) { # E is not continuous
             freq.tmp <- sapply(strata.list, function(x) colMeans(geno[x, , drop = FALSE], na.rm = TRUE)/2)
-        if(is.null(ncol(freq.tmp))) freq.tmp <- matrix(freq.tmp, nrow = 1, dimnames = list(NULL, names(freq.tmp)))
-            n.tmp <- sapply(strata.list, function(x) colSums(!is.na(geno[x, , drop = FALSE])))
-        if(is.null(ncol(n.tmp))) n.tmp <- matrix(n.tmp, nrow = 1, dimnames = list(NULL, names(n.tmp)))
-            freq.tmp.rev<-freq.tmp[,order(ncol(freq.tmp):1),drop=FALSE]
-            n.tmp.rev<-n.tmp[,order(ncol(n.tmp):1),drop=FALSE]
+            if(is.null(ncol(freq.tmp))) freq.tmp <- matrix(freq.tmp, nrow = 1, dimnames = list(NULL, names(freq.tmp)))
+                n.tmp <- sapply(strata.list, function(x) colSums(!is.na(geno[x, , drop = FALSE])))
+            if(is.null(ncol(n.tmp))) n.tmp <- matrix(n.tmp, nrow = 1, dimnames = list(NULL, names(n.tmp)))
+                freq.tmp.rev<-freq.tmp[,order(ncol(freq.tmp):1),drop=FALSE]
+                n.tmp.rev<-n.tmp[,order(ncol(n.tmp):1),drop=FALSE]
             #combine the freq.tmp and n.tmp by alterating columns
-            rows.freq_N<-nrow(freq.tmp)
-            cols.freq_N<-ncol(freq.tmp)+ncol(n.tmp)
-            freq_N<-matrix(NA,nrow =rows.freq_N,ncol=cols.freq_N)
-            freq_N[,seq(1,cols.freq_N,2)]<-n.tmp
-            freq_N[,seq(2,cols.freq_N,2)]<-freq.tmp
-          }
-      
-          else {freq_N<-NA}
+                rows.freq_N<-nrow(freq.tmp)
+                cols.freq_N<-ncol(freq.tmp)+ncol(n.tmp)
+                freq_N<-matrix(NA,nrow =rows.freq_N,ncol=cols.freq_N)
+                freq_N[,seq(1,cols.freq_N,2)]<-n.tmp
+                freq_N[,seq(2,cols.freq_N,2)]<-freq.tmp
+            }else {freq_N<-NA}
           
     
           miss.idx <- which(is.na(geno))

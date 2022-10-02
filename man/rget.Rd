@@ -17,7 +17,7 @@ rget(
   miss.cutoff = 1,
   missing.method = "impute2mean",
   nperbatch = 100,
-  ncores,
+  ncores = 1,
   verbose = FALSE
 )
 }
