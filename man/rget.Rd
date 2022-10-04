@@ -18,6 +18,7 @@ rget(
   missing.method = "impute2mean",
   nperbatch = 100,
   ncores = 1,
+  is.dosage = FALSE,
   verbose = FALSE
 )
 }
@@ -47,6 +48,8 @@ rget(
 \item{nperbatch}{an positive integer for how many SNPs should be tested in a batch (default = 100).}
 
 \item{ncores}{a positive integer indicating the number of cores used in parallel computing (default = 1)}
+
+\item{is.dosage}{whether imputed dosage should be used from a GDS infile (default = FALSE).}
 
 \item{verbose}{whether failed matrix inversions should be written to outfile.err for debugging (default = FALSE).}
 }

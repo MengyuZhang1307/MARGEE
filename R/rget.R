@@ -13,13 +13,14 @@
 #' @param missing.method method of handling missing genotypes.Either "impute2mean" or "omit" (default = "impute2mean") [TBT]
 #' @param nperbatch an positive integer for how many SNPs should be tested in a batch (default = 100). 
 #' @param ncores a positive integer indicating the number of cores used in parallel computing (default = 1)
+#' @param is.dosage whether imputed dosage should be used from a GDS infile (default = FALSE).
 #' @param verbose  whether failed matrix inversions should be written to outfile.err for debugging (default = FALSE).
 #' @export
 
 rget = function(null.obj, outdir, 
     interaction, geno.file, interaction.covariates=NULL, 
     meta.output=F, center=T, related.id, MAF.range = c(0.01, 0.5), 
-    miss.cutoff = 1, missing.method = "impute2mean", nperbatch = 100, ncores = 1, verbose = FALSE){
+    miss.cutoff = 1, missing.method = "impute2mean", nperbatch = 100, ncores = 1, is.dosage = FALSE, verbose = FALSE){
 
     if(Sys.info()["sysname"] == "Windows" && ncores > 1) {
         warning("The package doMC is not available on Windows... Switching to single thread...")
@@ -219,7 +220,7 @@ rget = function(null.obj, outdir,
                             tmp2.variant.idx = tmp.variant.idx[((j-1)*nperbatch+1):(j*nperbatch)]
                         }
                         SeqArray::seqSetFilter(gds, variant.id = tmp2.variant.idx, verbose = FALSE)
-                        geno <- SeqVarTools::altDosage(gds, use.names = FALSE)
+                        geno <- if(is.dosage) SeqVarTools::imputedDosage(gds, use.names = FALSE) else SeqVarTools::altDosage(gds, use.names = FALSE)
                         ng <- ncol(geno)
                         freq <- colMeans(geno, na.rm = TRUE)/2
                         if(any(duplicated(null.obj$id_include))) geno <- crossprod(J, geno)
@@ -498,7 +499,7 @@ rget = function(null.obj, outdir,
             tmp2.variant.idx = tmp.variant.idx[((j-1)*nperbatch+1):(j*nperbatch)]
           }   
         SeqArray::seqSetFilter(gds, variant.id = tmp2.variant.idx, verbose = FALSE)
-        geno <- SeqVarTools::altDosage(gds, use.names = FALSE)
+        geno <- if(is.dosage) SeqVarTools::imputedDosage(gds, use.names = FALSE) else SeqVarTools::altDosage(gds, use.names = FALSE)
         ng <- ncol(geno)
         freq <- colMeans(geno, na.rm = TRUE)/2
 
