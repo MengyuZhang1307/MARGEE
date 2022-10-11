@@ -1,11 +1,11 @@
-#' Conduct robust single-variant main effect tests, gene-environment interaction tests
+#' Conduct robust single-variant -environment interaction tests and joint test for common variants
 #'
-#' @param null.obj The 'glmmkin' class object. Please use sparse kinship matrix (e.g. dsTMatrix class) when use 'glmmkin' function in GMMAT package
+#' @param null.obj The 'glmmkin' class object. Please use sparse kinship matrix (e.g. dsTMatrix class) as kin matrix when use 'glmmkin' function in GMMAT package
 #' @param interaction a vector contains indices or variable name of the environmental factors
 #' @param geno.file the name of a GDS file (including the suffix .gds)
 #' @param outdir the directory name of outfile res.txt
 #' @param interaction.covariates a vector contains indices or variable name of the interaction covariates
-#' @param meta.output please keep the default value. boolean value to modiy the output file. If TRUE, the GxE effect estimate and variance and covariance associated with the effect estimate are included in the output file. (default = FALSE)
+#' @param meta.output boolean value to modiy the output file. If TRUE, the GxE effect estimate and variance and covariance associated with the effect estimate are included in the output file. (default = FALSE)
 #' @param center If TRUE, genotypes will be centered before tests. Otherwise, original values will be used in the tests (default = TRUE)
 #' @param MAF.range a numeric vector of length 2 defining the minimum and maximum minor allele frequencies of variants that should be included in the analysis (default = c(0.01, 0.5), i.e. common variants).
 #' @param related.id a numeric or a character vector contains family id
@@ -17,7 +17,7 @@
 #' @param verbose  whether failed matrix inversions should be written to outfile.err for debugging (default = FALSE).
 #' @export
 
-rget = function(null.obj, outdir, 
+rom = function(null.obj, outdir, 
     interaction, geno.file, interaction.covariates=NULL, 
     meta.output=F, center=T, related.id, MAF.range = c(0.01, 0.5), 
     miss.cutoff = 1, missing.method = "impute2mean", nperbatch = 100, ncores = 1, is.dosage = FALSE, verbose = FALSE){
@@ -31,7 +31,8 @@ rget = function(null.obj, outdir,
     if(grepl("\\.bgen$", geno.file[1])) stop("Error: currently geno.file must be .gds, .bgen format not yet supported...")
     if(!inherits(null.obj, c("glmmkin", "glmmkin.multi"))) stop("Error: null.obj must be a class glmmkin or glmmkin.multi object!")
     if(inherits(null.obj,"glmmkin.multi")) stop("Error: currently null.obj must be a class glmmkin object, glmmkin.multi not yet supported...")
-
+    if(meta.output) stop("Error: currently meta output not yet supported...")
+  
     if (!dir.exists(outdir)){
         dir.create(outdir)
     } else {

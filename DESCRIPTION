@@ -1,5 +1,5 @@
-Package: MARGEE
-Title: Mixed-model Association Robust tests for GEne–Environment interactions
+Package: RoM
+Title: Robust Mixed-model Association Tests for Gene–Environment Interaction
 Version: 0.1.0
 Authors@R: 
     person(given = "Mengyu", 

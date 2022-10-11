@@ -1,12 +1,12 @@
-# MARGEE (Mixed-model Association robust tests for GEne–Environment interactions)
+# RoM (Robust Mixed-model Association tests for Gene–Environment Interaction)
 
 ## Description
 
-MARGEE is an R package for gene-environment interaction (GEI) tests and joint tests for GWAS. Perform generalized linear mixed robust single-variant main effect tests, gene-environment interaction tests.
+RoM is an R package for gene-environment interaction (GEI) tests and joint tests for GWAS. Perform generalized linear mixed robust single-variant gene-environment interaction tests and joint tests.
 
 ## Installing
 
-MARGEE imports R packages 
+RoM imports R packages 
 [Matrix](https://cran.r-project.org/web/packages/Matrix/index.html), 
 [parallel](https://cran.r-project.org/web/views/HighPerformanceComputing.html), 
 [MASS](https://cran.r-project.org/web/packages/MASS/index.html), 
@@ -19,10 +19,10 @@ MARGEE imports R packages
 For optimal computational performance, it is recommended to use an R version configured with the Intel Math Kernel Library (or other fast BLAS/LAPACK libraries). See the [instructions](https://www.intel.com/content/www/us/en/developer/articles/technical/using-onemkl-with-r.html) 
 on building R with Intel MKL.
 
-To install MARGEE from GitHub, please use
+To install RoM from GitHub, please use
 
 ```
-devtools::install_github("MengyuZhang1307/MARGEE", ref = "main")
+devtools::install_github("MengyuZhang1307/RoM", ref = "main")
 ```
 
 ## Version
@@ -34,7 +34,8 @@ The current version is 0.1.0 (Sep 28, 2022).
 This software is licensed under GPL-3.
 
 ## Contact
-Please refer to the R help document of MARGEE for specific questions about each function. 
+
+Please refer to the R help document of RoM for specific questions about each function. 
 For comments, suggestions, bug reports and questions, please contact Mengyu Zhang (megnyu.zhang@uth.tmc.edu). 
 For bug reports, please include an example to reproduce the problem without having to access your confidential data.
 
