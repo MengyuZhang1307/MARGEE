@@ -27,7 +27,7 @@ devtools::install_github("MengyuZhang1307/RoM", ref = "main")
 
 ## Version
 
-The current version is 0.1.0 (Sep 28, 2022).
+The current version is 0.1.0 (Oct 10, 2022).
 
 ## License
 
