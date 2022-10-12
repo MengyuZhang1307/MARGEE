@@ -7,7 +7,7 @@ Authors@R:
     role = c("aut", "cre"), 
     email = "mengyu.zhang@uth.tmc.edu", 
     comment = c(ORCID = "0000-0002-5545-0354"))
-Description: Perform generalized linear mixed robust single-variant main effect tests, gene-environment interaction tests.
+Description: Perform generalized linear mixed robust single-variant gene-environment interaction tests and joint test.
 License: GPL (>= 3)
 Imports: Matrix, parallel, MASS, SeqArray, SeqVarTools, foreach, GMMAT
 Suggests: doMC

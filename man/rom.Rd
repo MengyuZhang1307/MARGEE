@@ -2,7 +2,7 @@
 % Please edit documentation in R/rom.R
 \name{rom}
 \alias{rom}
-\title{Conduct robust single-variant -environment interaction tests and joint test for common variants}
+\title{Conduct robust single-variant gene-environment interaction tests and joint test for common variants}
 \usage{
 rom(
   null.obj,
@@ -10,9 +10,9 @@ rom(
   interaction,
   geno.file,
   interaction.covariates = NULL,
+  related.id,
   meta.output = F,
   center = T,
-  related.id,
   MAF.range = c(0.01, 0.5),
   miss.cutoff = 1,
   missing.method = "impute2mean",
@@ -23,7 +23,7 @@ rom(
 )
 }
 \arguments{
-\item{null.obj}{The 'glmmkin' class object. Please use sparse kinship matrix (e.g. dsTMatrix class) as kin matrix when use 'glmmkin' function in GMMAT package}
+\item{null.obj}{The 'glmmkin' class object. Please use sparse kinship matrix (e.g. dsTMatrix class) when fit null model with 'glmmkin' function in GMMAT package}
 
 \item{outdir}{the directory name of outfile res.txt}
 
@@ -33,17 +33,17 @@ rom(
 
 \item{interaction.covariates}{a vector contains indices or variable name of the interaction covariates}
 
+\item{related.id}{a numeric or a character vector contains family id}
+
 \item{meta.output}{boolean value to modiy the output file. If TRUE, the GxE effect estimate and variance and covariance associated with the effect estimate are included in the output file. (default = FALSE)}
 
 \item{center}{If TRUE, genotypes will be centered before tests. Otherwise, original values will be used in the tests (default = TRUE)}
-
-\item{related.id}{a numeric or a character vector contains family id}
 
 \item{MAF.range}{a numeric vector of length 2 defining the minimum and maximum minor allele frequencies of variants that should be included in the analysis (default = c(0.01, 0.5), i.e. common variants).}
 
 \item{miss.cutoff}{the maximum missing rate allowed for a variant to be included (default = 1, including all variants)}
 
-\item{missing.method}{method of handling missing genotypes.Either "impute2mean" or "omit" (default = "impute2mean") \link{TBT}}
+\item{missing.method}{method of handling missing genotypes.Either "impute2mean" or "omit" (default = "impute2mean")}
 
 \item{nperbatch}{an positive integer for how many SNPs should be tested in a batch (default = 100).}
 
@@ -54,5 +54,5 @@ rom(
 \item{verbose}{whether failed matrix inversions should be written to outfile.err for debugging (default = FALSE).}
 }
 \description{
-Conduct robust single-variant -environment interaction tests and joint test for common variants
+Conduct robust single-variant gene-environment interaction tests and joint test for common variants
 }

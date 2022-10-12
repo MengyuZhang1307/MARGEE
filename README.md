@@ -2,7 +2,7 @@
 
 ## Description
 
-RoM is an R package for gene-environment interaction (GEI) tests and joint tests for GWAS. Perform generalized linear mixed robust single-variant gene-environment interaction tests and joint tests.
+RoM is an R package for Mixed-model association test. Perform generalized linear mixed robust single-variant gene-environment interaction tests and joint tests for common variants.
 
 ## Installing
 

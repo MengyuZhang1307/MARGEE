@@ -1,16 +1,16 @@
-#' Conduct robust single-variant -environment interaction tests and joint test for common variants
+#' Conduct robust single-variant gene-environment interaction tests and joint test for common variants
 #'
-#' @param null.obj The 'glmmkin' class object. Please use sparse kinship matrix (e.g. dsTMatrix class) as kin matrix when use 'glmmkin' function in GMMAT package
+#' @param null.obj The 'glmmkin' class object. Please use sparse kinship matrix (e.g. dsTMatrix class) when fit null model with 'glmmkin' function in GMMAT package
 #' @param interaction a vector contains indices or variable name of the environmental factors
+#' @param related.id a numeric or a character vector contains family id
 #' @param geno.file the name of a GDS file (including the suffix .gds)
 #' @param outdir the directory name of outfile res.txt
 #' @param interaction.covariates a vector contains indices or variable name of the interaction covariates
 #' @param meta.output boolean value to modiy the output file. If TRUE, the GxE effect estimate and variance and covariance associated with the effect estimate are included in the output file. (default = FALSE)
 #' @param center If TRUE, genotypes will be centered before tests. Otherwise, original values will be used in the tests (default = TRUE)
 #' @param MAF.range a numeric vector of length 2 defining the minimum and maximum minor allele frequencies of variants that should be included in the analysis (default = c(0.01, 0.5), i.e. common variants).
-#' @param related.id a numeric or a character vector contains family id
 #' @param miss.cutoff the maximum missing rate allowed for a variant to be included (default = 1, including all variants)
-#' @param missing.method method of handling missing genotypes.Either "impute2mean" or "omit" (default = "impute2mean") [TBT]
+#' @param missing.method method of handling missing genotypes.Either "impute2mean" or "omit" (default = "impute2mean")
 #' @param nperbatch an positive integer for how many SNPs should be tested in a batch (default = 100). 
 #' @param ncores a positive integer indicating the number of cores used in parallel computing (default = 1)
 #' @param is.dosage whether imputed dosage should be used from a GDS infile (default = FALSE).
@@ -18,8 +18,8 @@
 #' @export
 
 rom = function(null.obj, outdir, 
-    interaction, geno.file, interaction.covariates=NULL, 
-    meta.output=F, center=T, related.id, MAF.range = c(0.01, 0.5), 
+    interaction, geno.file, interaction.covariates=NULL, related.id,
+    meta.output=F, center=T, MAF.range = c(0.01, 0.5), 
     miss.cutoff = 1, missing.method = "impute2mean", nperbatch = 100, ncores = 1, is.dosage = FALSE, verbose = FALSE){
 
     if(Sys.info()["sysname"] == "Windows" && ncores > 1) {
@@ -32,6 +32,7 @@ rom = function(null.obj, outdir,
     if(!inherits(null.obj, c("glmmkin", "glmmkin.multi"))) stop("Error: null.obj must be a class glmmkin or glmmkin.multi object!")
     if(inherits(null.obj,"glmmkin.multi")) stop("Error: currently null.obj must be a class glmmkin object, glmmkin.multi not yet supported...")
     if(meta.output) stop("Error: currently meta output not yet supported...")
+    if(!is.na(null.obj$P)) stop("Error: Please use sparse kinship matrix when fitting the null model")
   
     if (!dir.exists(outdir)){
         dir.create(outdir)
