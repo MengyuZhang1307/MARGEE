@@ -712,159 +712,159 @@ rom = function(null.obj, outdir,
 
     
     
-#fix.dgesdd <- function(gds, out, debug_file, null.obj, J, residuals, tmp2.variant.idx, meta.output, center, missing.method, strata.list, ncolE, E, ei, bin_header, meta.header, totalCol, tmp_idx, include) {
-#  ei1 <- ei+1
-#  tmp_idx0 <- tmp_idx
-#  tmp.out <- lapply(tmp2.variant.idx, function(j) {
-#   
-#    SeqArray::seqSetFilter(gds, variant.id = j, verbose = FALSE)
-#    geno <- SeqVarTools::altDosage(gds, use.names = FALSE)
-#    ng <- ncol(geno)
-#    freq <- colMeans(geno, na.rm = TRUE)/2
-#    if(any(duplicated(null.obj$id_include))) geno <- crossprod(J, geno)
-#    N <- nrow(geno) - colSums(is.na(geno))
-#    if(!is.null(strata.list)) { # E is not continuous
-#      freq.tmp <- sapply(strata.list, function(x) colMeans(geno[x, , drop = FALSE], na.rm = TRUE)/2)
-#      if(is.null(ncol(freq.tmp))) freq.tmp <- matrix(freq.tmp, nrow = 1, dimnames = list(NULL, names(freq.tmp)))
-#      n.tmp <- sapply(strata.list, function(x) colSums(!is.na(geno[x, , drop = FALSE])))
-#      if(is.null(ncol(n.tmp))) n.tmp <- matrix(n.tmp, nrow = 1, dimnames = list(NULL, names(n.tmp)))
-#      freq.tmp.rev<-freq.tmp[,order(ncol(freq.tmp):1),drop=FALSE]
-#      n.tmp.rev<-n.tmp[,order(ncol(n.tmp):1),drop=FALSE]
-#      rows.freq_N<-nrow(freq.tmp)
-#      cols.freq_N<-ncol(freq.tmp)+ncol(n.tmp)
-#      freq_N<-matrix(NA,nrow =rows.freq_N,ncol=cols.freq_N)
-#      freq_N[,seq(1,cols.freq_N,2)]<-n.tmp
-#      freq_N[,seq(2,cols.freq_N,2)]<-freq.tmp
-#    }
-#    
-#    miss.idx <- which(is.na(geno))
-#    if(length(miss.idx)>0) {
-#      geno[miss.idx] <- if(missing.method == "impute2mean") 2*freq[ceiling(miss.idx/nrow(geno))] else NA
-#    }
-#    if(center) geno <- scale(geno, scale = FALSE)
-#    miss.idx <- which(is.na(geno))
-#    if(length(miss.idx)>0) { # omit
-#      geno[miss.idx] <- 0
-#    }
-#            
-#    K <- do.call(cbind, sapply(1:ncolE, function(xx) geno*E[,xx], simplify = FALSE), envir = environment())
-#
-#    U <- as.vector(crossprod(geno, residuals))
-#    if(!is.null(null.obj$P)) {
-#      PG <- crossprod(null.obj$P, geno)
-#    } else {
-#      GSigma_iX <- crossprod(geno, null.obj$Sigma_iX)
-#      PG <- crossprod(null.obj$Sigma_i, geno) - tcrossprod(null.obj$Sigma_iX, tcrossprod(GSigma_iX, null.obj$cov))
-#    }
-#
-#    GPG <- as.matrix(crossprod(geno, PG)) * (matrix(1, 1, 1) %x% diag(ng))
-#    GPG_i <- try(solve(GPG), silent = TRUE)
-#    if(inherits(GPG_i, "try-error")) GPG_i <- MASS::ginv(GPG)
-#    V_i <- diag(GPG_i)
-#    
-#    BETA.MAIN <- V_i * U
-#    SE.MAIN   <- sqrt(V_i)
-#    STAT.MAIN <- BETA.MAIN * U
-#    PVAL.MAIN <- ifelse(V_i>0, pchisq(STAT.MAIN, df=1, lower.tail=FALSE), NA)
-#
-#    if(!is.null(null.obj$P)) {
-#      KPK <- crossprod(K,crossprod(null.obj$P,K))
-#    } else {
-#      KSigma_iX <- crossprod(K, null.obj$Sigma_iX)
-#      KPK <- crossprod(K, crossprod(null.obj$Sigma_i, K)) - tcrossprod(KSigma_iX, tcrossprod(KSigma_iX, null.obj$cov))
-#    }
-#    
-#    KPK <- as.matrix(KPK) * (matrix(1, ncolE, ncolE) %x% diag(ng))
-#    IV.V_i <- try(solve(KPK), silent = TRUE)
-#    if(inherits(IV.V_i, "try-error")) IV.V_i <- try(MASS::ginv(KPK), silent = TRUE)
-#    if (inherits(IV.V_i, "try-error")) {
-#      write.table("Variant Info: ", debug_file, row.names = F, col.names = F, quote = F, append = T)
-#      write.table(out[tmp_idx, ], debug_file, row.names = F, col.names = F, quote = F, append = T)
-#      write.table("KPK: ", debug_file, row.names = F, col.names = F, quote = F, append = T)
-#      write.table(KPK, debug_file, row.names = F, col.names = F, quote = F, append = T)
-#      include[tmp_idx] <<- F
-#      tmp_idx <<- tmp_idx + 1
-#      return(NULL)
-#    }
-#    
-#    IV.U <- (rep(1, ncolE) %x% diag(ng)) * as.vector(crossprod(K,residuals))
-#    BETA.INT <- crossprod(IV.V_i, IV.U)
-#    
-#    ng1   <- ng+1
-#    ngei1 <- ng*ei1
-#    
-#    IV.E_i <- try(solve(IV.V_i[ng1:ngei1, ng1:ngei1]), silent = TRUE)
-#    if(inherits(IV.E_i, "try-error")) IV.E_i <- try(MASS::ginv(IV.V_i[ng1:ngei1, ng1:ngei1]), silent = TRUE)
-#    if(inherits(IV.E_i, "try-error")) {
-#      write.table("Variant Info: ", debug_file, row.names = F, col.names = F, quote = F, append = T)
-#      write.table(out[tmp_idx, ], debug_file, row.names = F, col.names = F, quote = F, append = T)
-#      write.table("KPK: ", debug_file, row.names = F, col.names = F, quote = F, append = T)
-#      write.table(KPK, debug_file, row.names = F, col.names = F, quote = F, append = T)
-#      write.table("IV.E_i: ", debug_file, row.names = F, col.names = F, quote = F, append = T)
-#      write.table(IV.V_i[ng1:ngei1, ng1:ngei1], debug_file, row.names = F, col.names = F, quote = F, append = T)
-#      include[tmp_idx] <<- F
-#      tmp_idx <<- tmp_idx + 1
-#      return(NULL)
-#    }
-#    STAT.INT   <- diag(crossprod(BETA.INT[ng1:ngei1,], crossprod(IV.E_i, BETA.INT[ng1:ngei1,])))
-#    
-#    IV.GE_i <- try(solve(IV.V_i[1:ngei1, 1:ngei1]), silent = TRUE)
-#    if(inherits(IV.GE_i, "try-error")) IV.GE_i <- try(MASS::ginv(IV.V_i[1:ngei1, 1:ngei1]), silent = TRUE)
-#    if(inherits(IV.GE_i, "try-error")) {
-#      write.table("Variant Info: ", debug_file, row.names = F, col.names = F, quote = F, append = T)
-#      write.table(out[tmp_idx, ], debug_file, row.names = F, col.names = F, quote = F, append = T)
-#      write.table("KPK: ", debug_file, row.names = F, col.names = F, quote = F, append = T)
-#      write.table(KPK, debug_file, row.names = F, col.names = F, quote = F, append = T)
-#      write.table("IV.GE_i: ", debug_file, row.names = F, col.names = F, quote = F, append = T)
-#      write.table(IV.V_i[1:ngei1, 1:ngei1], debug_file, row.names = F, col.names = F, quote = F, append = T)
-#      include[tmp_idx] <<- F
-#      tmp_idx <<- tmp_idx + 1
-#      return(NULL)
-#    }
-#    STAT.JOINT <- diag(crossprod(BETA.INT[1:ngei1,], crossprod(IV.GE_i, BETA.INT[1:ngei1,])))
-#    
-#    PVAL.INT   <- pchisq(STAT.INT, df=ei, lower.tail=FALSE)
-#    PVAL.JOINT <- ifelse(is.na(PVAL.MAIN), NA, pchisq(STAT.JOINT, df=1+ei, lower.tail=FALSE))
-#    
-#    
-#    split_mat <- matrix(1:(ncolE*ncolE), ncolE, ncolE)
-#    if (ng > 1) {
-#      IV.V_i <- split(IV.V_i, split_mat %x% diag(ng))[-1]
-#    }else {
-#      IV.V_i <- split(IV.V_i, split_mat %x% diag(ng))
-#    }
-#    tmp_idx <<- tmp_idx + 1
-#    if (meta.output) {
-#      return(rbind(N, t(freq_N), BETA.MAIN, SE.MAIN, 
-#                   diag(as.matrix(BETA.INT[1:ng,])), # Beta G;
-#                   t(do.call(cbind, lapply(2:ncolE, function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE and then Beta Covariates
-#                   t(do.call(cbind, lapply(split_mat[lower.tri(split_mat)], function(x) {IV.V_i[[x]]}))),
-#                   PVAL.MAIN, STAT.INT, PVAL.INT, PVAL.JOINT))
-#    } else {
-#      split_mat <- as.matrix(split_mat[2:(ei+1),2:(ei+1)])
-#      if (length(split_mat) == 1) {
-#        return(rbind(N, t(freq_N), BETA.MAIN, SE.MAIN,
-#                     t(do.call(cbind, lapply(2:(ei+1), function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE only
-#                     t(sqrt(do.call(cbind,lapply(diag(split_mat), function(x) {IV.V_i[[x]]})))),   # SE Beta GxE only
-#                     PVAL.MAIN, STAT.INT, PVAL.INT, PVAL.JOINT))
-#      } else {
-#        return(rbind(N, t(freq_N), BETA.MAIN, SE.MAIN,
-#                     t(do.call(cbind, lapply(2:(ei+1), function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE only
-#                     t(sqrt(do.call(cbind,lapply(diag(split_mat), function(x) {IV.V_i[[x]]})))),   # SE Beta GxE only
-#                     t(do.call(cbind, lapply(split_mat[lower.tri(split_mat)], function(x) {IV.V_i[[x]]}))),
-#                     PVAL.MAIN, STAT.INT, PVAL.INT, PVAL.JOINT)) 
-#      }
-#    }
-#    
-#  })
-#  if (any(include[tmp_idx0:(tmp_idx-1)])) {
-#    tmp.out <- matrix(unlist(tmp.out), nrow = totalCol, byrow = F, dimnames = list(c("N", bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "STAT.INT", "PVAL.INT", "PVAL.JOINT"), NULL))
-#    return(list(tmp_idx, include, tmp.out))
-#  } else {
-#    return(list(tmp_idx, include, NULL))
-#  }
-#  
-#}
+fix.dgesdd <- function(gds, out, debug_file, null.obj, J, residuals, tmp2.variant.idx, meta.output, center, missing.method, strata.list, ncolE, E, ei, bin_header, meta.header, totalCol, tmp_idx, include) {
+  ei1 <- ei+1
+  tmp_idx0 <- tmp_idx
+  tmp.out <- lapply(tmp2.variant.idx, function(j) {
+   
+    SeqArray::seqSetFilter(gds, variant.id = j, verbose = FALSE)
+    geno <- SeqVarTools::altDosage(gds, use.names = FALSE)
+    ng <- ncol(geno)
+    freq <- colMeans(geno, na.rm = TRUE)/2
+    if(any(duplicated(null.obj$id_include))) geno <- crossprod(J, geno)
+    N <- nrow(geno) - colSums(is.na(geno))
+    if(!is.null(strata.list)) { # E is not continuous
+      freq.tmp <- sapply(strata.list, function(x) colMeans(geno[x, , drop = FALSE], na.rm = TRUE)/2)
+      if(is.null(ncol(freq.tmp))) freq.tmp <- matrix(freq.tmp, nrow = 1, dimnames = list(NULL, names(freq.tmp)))
+      n.tmp <- sapply(strata.list, function(x) colSums(!is.na(geno[x, , drop = FALSE])))
+      if(is.null(ncol(n.tmp))) n.tmp <- matrix(n.tmp, nrow = 1, dimnames = list(NULL, names(n.tmp)))
+      freq.tmp.rev<-freq.tmp[,order(ncol(freq.tmp):1),drop=FALSE]
+      n.tmp.rev<-n.tmp[,order(ncol(n.tmp):1),drop=FALSE]
+      rows.freq_N<-nrow(freq.tmp)
+      cols.freq_N<-ncol(freq.tmp)+ncol(n.tmp)
+      freq_N<-matrix(NA,nrow =rows.freq_N,ncol=cols.freq_N)
+      freq_N[,seq(1,cols.freq_N,2)]<-n.tmp
+      freq_N[,seq(2,cols.freq_N,2)]<-freq.tmp
+    }
+    
+    miss.idx <- which(is.na(geno))
+    if(length(miss.idx)>0) {
+      geno[miss.idx] <- if(missing.method == "impute2mean") 2*freq[ceiling(miss.idx/nrow(geno))] else NA
+    }
+    if(center) geno <- scale(geno, scale = FALSE)
+    miss.idx <- which(is.na(geno))
+    if(length(miss.idx)>0) { # omit
+      geno[miss.idx] <- 0
+    }
+            
+    K <- do.call(cbind, sapply(1:ncolE, function(xx) geno*E[,xx], simplify = FALSE), envir = environment())
+
+    U <- as.vector(crossprod(geno, residuals))
+    if(!is.null(null.obj$P)) {
+      PG <- crossprod(null.obj$P, geno)
+    } else {
+      GSigma_iX <- crossprod(geno, null.obj$Sigma_iX)
+      PG <- crossprod(null.obj$Sigma_i, geno) - tcrossprod(null.obj$Sigma_iX, tcrossprod(GSigma_iX, null.obj$cov))
+    }
+
+    GPG <- as.matrix(crossprod(geno, PG)) * (matrix(1, 1, 1) %x% diag(ng))
+    GPG_i <- try(solve(GPG), silent = TRUE)
+    if(inherits(GPG_i, "try-error")) GPG_i <- MASS::ginv(GPG)
+    V_i <- diag(GPG_i)
+    
+    BETA.MAIN <- V_i * U
+    SE.MAIN   <- sqrt(V_i)
+    STAT.MAIN <- BETA.MAIN * U
+    PVAL.MAIN <- ifelse(V_i>0, pchisq(STAT.MAIN, df=1, lower.tail=FALSE), NA)
+
+    if(!is.null(null.obj$P)) {
+      KPK <- crossprod(K,crossprod(null.obj$P,K))
+    } else {
+      KSigma_iX <- crossprod(K, null.obj$Sigma_iX)
+      KPK <- crossprod(K, crossprod(null.obj$Sigma_i, K)) - tcrossprod(KSigma_iX, tcrossprod(KSigma_iX, null.obj$cov))
+    }
+    
+    KPK <- as.matrix(KPK) * (matrix(1, ncolE, ncolE) %x% diag(ng))
+    IV.V_i <- try(solve(KPK), silent = TRUE)
+    if(inherits(IV.V_i, "try-error")) IV.V_i <- try(MASS::ginv(KPK), silent = TRUE)
+    if (inherits(IV.V_i, "try-error")) {
+      write.table("Variant Info: ", debug_file, row.names = F, col.names = F, quote = F, append = T)
+      write.table(out[tmp_idx, ], debug_file, row.names = F, col.names = F, quote = F, append = T)
+      write.table("KPK: ", debug_file, row.names = F, col.names = F, quote = F, append = T)
+      write.table(KPK, debug_file, row.names = F, col.names = F, quote = F, append = T)
+      include[tmp_idx] <<- F
+      tmp_idx <<- tmp_idx + 1
+      return(NULL)
+    }
+    
+    IV.U <- (rep(1, ncolE) %x% diag(ng)) * as.vector(crossprod(K,residuals))
+    BETA.INT <- crossprod(IV.V_i, IV.U)
+    
+    ng1   <- ng+1
+    ngei1 <- ng*ei1
+    
+    IV.E_i <- try(solve(IV.V_i[ng1:ngei1, ng1:ngei1]), silent = TRUE)
+    if(inherits(IV.E_i, "try-error")) IV.E_i <- try(MASS::ginv(IV.V_i[ng1:ngei1, ng1:ngei1]), silent = TRUE)
+    if(inherits(IV.E_i, "try-error")) {
+      write.table("Variant Info: ", debug_file, row.names = F, col.names = F, quote = F, append = T)
+      write.table(out[tmp_idx, ], debug_file, row.names = F, col.names = F, quote = F, append = T)
+      write.table("KPK: ", debug_file, row.names = F, col.names = F, quote = F, append = T)
+      write.table(KPK, debug_file, row.names = F, col.names = F, quote = F, append = T)
+      write.table("IV.E_i: ", debug_file, row.names = F, col.names = F, quote = F, append = T)
+      write.table(IV.V_i[ng1:ngei1, ng1:ngei1], debug_file, row.names = F, col.names = F, quote = F, append = T)
+      include[tmp_idx] <<- F
+      tmp_idx <<- tmp_idx + 1
+      return(NULL)
+    }
+    STAT.INT   <- diag(crossprod(BETA.INT[ng1:ngei1,], crossprod(IV.E_i, BETA.INT[ng1:ngei1,])))
+    
+    IV.GE_i <- try(solve(IV.V_i[1:ngei1, 1:ngei1]), silent = TRUE)
+    if(inherits(IV.GE_i, "try-error")) IV.GE_i <- try(MASS::ginv(IV.V_i[1:ngei1, 1:ngei1]), silent = TRUE)
+    if(inherits(IV.GE_i, "try-error")) {
+      write.table("Variant Info: ", debug_file, row.names = F, col.names = F, quote = F, append = T)
+      write.table(out[tmp_idx, ], debug_file, row.names = F, col.names = F, quote = F, append = T)
+      write.table("KPK: ", debug_file, row.names = F, col.names = F, quote = F, append = T)
+      write.table(KPK, debug_file, row.names = F, col.names = F, quote = F, append = T)
+      write.table("IV.GE_i: ", debug_file, row.names = F, col.names = F, quote = F, append = T)
+      write.table(IV.V_i[1:ngei1, 1:ngei1], debug_file, row.names = F, col.names = F, quote = F, append = T)
+      include[tmp_idx] <<- F
+      tmp_idx <<- tmp_idx + 1
+      return(NULL)
+    }
+    STAT.JOINT <- diag(crossprod(BETA.INT[1:ngei1,], crossprod(IV.GE_i, BETA.INT[1:ngei1,])))
+    
+    PVAL.INT   <- pchisq(STAT.INT, df=ei, lower.tail=FALSE)
+    PVAL.JOINT <- ifelse(is.na(PVAL.MAIN), NA, pchisq(STAT.JOINT, df=1+ei, lower.tail=FALSE))
+    
+    
+    split_mat <- matrix(1:(ncolE*ncolE), ncolE, ncolE)
+    if (ng > 1) {
+      IV.V_i <- split(IV.V_i, split_mat %x% diag(ng))[-1]
+    }else {
+      IV.V_i <- split(IV.V_i, split_mat %x% diag(ng))
+    }
+    tmp_idx <<- tmp_idx + 1
+    if (meta.output) {
+      return(rbind(N, t(freq_N), BETA.MAIN, SE.MAIN, 
+                   diag(as.matrix(BETA.INT[1:ng,])), # Beta G;
+                   t(do.call(cbind, lapply(2:ncolE, function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE and then Beta Covariates
+                   t(do.call(cbind, lapply(split_mat[lower.tri(split_mat)], function(x) {IV.V_i[[x]]}))),
+                   PVAL.MAIN, STAT.INT, PVAL.INT, PVAL.JOINT))
+    } else {
+      split_mat <- as.matrix(split_mat[2:(ei+1),2:(ei+1)])
+      if (length(split_mat) == 1) {
+        return(rbind(N, t(freq_N), BETA.MAIN, SE.MAIN,
+                     t(do.call(cbind, lapply(2:(ei+1), function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE only
+                     t(sqrt(do.call(cbind,lapply(diag(split_mat), function(x) {IV.V_i[[x]]})))),   # SE Beta GxE only
+                     PVAL.MAIN, STAT.INT, PVAL.INT, PVAL.JOINT))
+      } else {
+        return(rbind(N, t(freq_N), BETA.MAIN, SE.MAIN,
+                     t(do.call(cbind, lapply(2:(ei+1), function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE only
+                     t(sqrt(do.call(cbind,lapply(diag(split_mat), function(x) {IV.V_i[[x]]})))),   # SE Beta GxE only
+                     t(do.call(cbind, lapply(split_mat[lower.tri(split_mat)], function(x) {IV.V_i[[x]]}))),
+                     PVAL.MAIN, STAT.INT, PVAL.INT, PVAL.JOINT)) 
+      }
+    }
+    
+  })
+  if (any(include[tmp_idx0:(tmp_idx-1)])) {
+    tmp.out <- matrix(unlist(tmp.out), nrow = totalCol, byrow = F, dimnames = list(c("N", bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "STAT.INT", "PVAL.INT", "PVAL.JOINT"), NULL))
+    return(list(tmp_idx, include, tmp.out))
+  } else {
+    return(list(tmp_idx, include, NULL))
+  }
+  
+}
 
 
 
