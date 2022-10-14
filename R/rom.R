@@ -32,7 +32,7 @@ rom = function(null.obj, outdir,
     if(!inherits(null.obj, c("glmmkin", "glmmkin.multi"))) stop("Error: null.obj must be a class glmmkin or glmmkin.multi object!")
     if(inherits(null.obj,"glmmkin.multi")) stop("Error: currently null.obj must be a class glmmkin object, glmmkin.multi not yet supported...")
     if(meta.output) stop("Error: currently meta output not yet supported...")
-    if(!is.na(null.obj$P)) stop("Error: Please use sparse kinship matrix when fitting the null model")
+    #if(!is.na(null.obj$P)) stop("Error: Please use sparse kinship matrix when fitting the null model")
   
     if (!dir.exists(outdir)){
         dir.create(outdir)
