@@ -175,7 +175,7 @@ rom = function(null.obj, outfile,
         }
 # b = 1
         foreach(b=1:ncores, .inorder=FALSE, .options.multicore = list(preschedule = FALSE, set.seed = FALSE)) %dopar% {
-                debug_file <- paste0(outdir, "_tmp.", b, ".err")
+                debug_file <- paste0(outfile, "_tmp.", b, ".err")
                 file.create(debug_file)
             
                 variant.idx <- if(b <= n.p.percore_1) variant.idx.all[((b-1)*(p.percore-1)+1):(b*(p.percore-1))] else variant.idx.all[(n.p.percore_1*(p.percore-1)+(b-n.p.percore_1-1)*p.percore+1):(n.p.percore_1*(p.percore-1)+(b-n.p.percore_1)*p.percore)]
@@ -462,7 +462,7 @@ rom = function(null.obj, outfile,
          write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", bin_header, "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal",  "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), outfile, quote = F, col.names = F, row.names = F, sep="\t")
      }
 
-     debug_file <- paste0(outdir, "_tmp.err")
+     debug_file <- paste0(outfile, "_tmp.err")
      file.create(debug_file)
      for(i in 1:nbatch.flush) {
         gc()
