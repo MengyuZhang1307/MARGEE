@@ -4,7 +4,7 @@
 #' @param interaction a vector contains indices or variable name of the environmental factors
 #' @param related.id a numeric or a character vector contains family id
 #' @param geno.file the name of a GDS file (including the suffix .gds)
-#' @param outdir the directory name of outfile res.txt
+#' @param outfile the directory name of outfile res.txt
 #' @param interaction.covariates a vector contains indices or variable name of the interaction covariates
 #' @param meta.output boolean value to modiy the output file. If TRUE, the GxE effect estimate and variance and covariance associated with the effect estimate are included in the output file. (default = FALSE)
 #' @param center If TRUE, genotypes will be centered before tests. Otherwise, original values will be used in the tests (default = TRUE)
@@ -17,7 +17,7 @@
 #' @param verbose  whether failed matrix inversions should be written to outfile.err for debugging (default = FALSE).
 #' @export
 
-rom = function(null.obj, outdir, 
+rom = function(null.obj, outfile, 
     interaction, geno.file, interaction.covariates=NULL, related.id,
     meta.output=F, center=T, MAF.range = c(0.01, 0.5), 
     miss.cutoff = 1, missing.method = "impute2mean", nperbatch = 100, ncores = 1, is.dosage = FALSE, verbose = FALSE){
@@ -34,8 +34,8 @@ rom = function(null.obj, outdir,
     if(meta.output) stop("Error: currently meta output not yet supported...")
     #if(!is.na(null.obj$P)) stop("Error: Please use sparse kinship matrix when fitting the null model")
   
-    if (!dir.exists(outdir)){
-        dir.create(outdir)
+    if (!dir.exists(outfile)){
+        dir.create(outfile)
     } else {
         print("Dir already exists!")
     }
@@ -169,13 +169,13 @@ rom = function(null.obj, outdir,
         }
 
         if (is.null(strata.list)){
-            write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal", "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), paste0(outdir, "/res.txt"), quote = F, col.names = F, row.names = F, sep="\t")
+            write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal", "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), outfile, quote = F, col.names = F, row.names = F, sep="\t")
         } else {
-            write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", bin_header, "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal",  "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), paste0(outdir, "/res.txt"), quote = F, col.names = F, row.names = F, sep="\t")
+            write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", bin_header, "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal",  "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), outfile, quote = F, col.names = F, row.names = F, sep="\t")
         }
 # b = 1
         foreach(b=1:ncores, .inorder=FALSE, .options.multicore = list(preschedule = FALSE, set.seed = FALSE)) %dopar% {
-                debug_file <- paste0(outdir, "/tmp.", b, ".err")
+                debug_file <- paste0(outdir, "_tmp.", b, ".err")
                 file.create(debug_file)
             
                 variant.idx <- if(b <= n.p.percore_1) variant.idx.all[((b-1)*(p.percore-1)+1):(b*(p.percore-1))] else variant.idx.all[(n.p.percore_1*(p.percore-1)+(b-n.p.percore_1-1)*p.percore+1):(n.p.percore_1*(p.percore-1)+(b-n.p.percore_1)*p.percore)]
@@ -395,14 +395,14 @@ rom = function(null.obj, outdir,
                             out <- out[include,]
                             tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL,   c("N", bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.INT", "SW.PVAL.JOINT")))
                             out <- cbind(out[,c("SNP","CHR","POS","REF","ALT")], tmp.out[,"N", drop = F], out[,"AF",drop=F], tmp.out[,c(bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header,"PVAL.MARGINAL", "PVAL.INT", "PVAL.JOINT", "SW.PVAL.INT", "SW.PVAL.JOINT"), drop=F])
-                            write.table(out, paste0(outdir, "/tmp.", b, ".txt"), quote=FALSE, row.names=FALSE,  col.names=FALSE, sep="\t", append=TRUE, na=".")
+                            write.table(out, paste0(outfile, "_tmp.", b, ".txt"), quote=FALSE, row.names=FALSE,  col.names=FALSE, sep="\t", append=TRUE, na=".")
                         }
                     } else {
                         if (any(include)) {
                             out <- out[include,]
                             tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL, c("N",   "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.INT", "SW.PVAL.JOINT")))
                             out <- cbind(out[,c("SNP","CHR","POS","REF","ALT")], tmp.out[,"N", drop = F], out[,"AF",drop=F],   tmp.out[,c( "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.INT", "SW.PVAL.JOINT"), drop = F])
-                            write.table(out, paste0(outdir, "/tmp.", b, ".txt"), quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t", append=TRUE, na=".")
+                            write.table(out, paste0(outfile, "_tmp.", b, ".txt"), quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t", append=TRUE, na=".")
                         }
                     }
                     #print(object.size(out))
@@ -415,10 +415,10 @@ rom = function(null.obj, outdir,
                 SeqArray::seqClose(geno.file)
         }
         for(b in 1:ncores) {
-            system(paste0("cat ", outdir, "/tmp.", b, ".txt", " >> ", paste0(outdir, "/res.txt")))
-            system(paste0("cat ", outdir, "/tmp.", b , ".err", " >> ", outdir, ".err"))
-            unlink(paste0(outdir, "/tmp.", b, ".txt"))
-            unlink(paste0(outdir, "/tmp.", b , ".err"))
+            system(paste0("cat ", outfile, "_tmp.", b, ".txt", " >> ", paste0(outfile, "/res.txt")))
+            system(paste0("cat ", outfile, "_tmp.", b , ".err", " >> ", outfile, ".err"))
+            unlink(paste0(outfile, "_tmp.", b, ".txt"))
+            unlink(paste0(outfile, "_tmp.", b , ".err"))
         }
     } else { # use single core
             variant.idx <- variant.idx.all
@@ -457,12 +457,12 @@ rom = function(null.obj, outdir,
         }  
  
      if (is.null(strata.list)){
-         write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal", "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), paste0(outdir, "/res.txt"), quote = F, col.names = F, row.names = F, sep="\t")
+         write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal", "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), outfile, quote = F, col.names = F, row.names = F, sep="\t")
      } else {
-         write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", bin_header, "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal",  "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), paste0(outdir, "/res.txt"), quote = F, col.names = F, row.names = F, sep="\t")
+         write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", bin_header, "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal",  "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), outfile, quote = F, col.names = F, row.names = F, sep="\t")
      }
 
-     debug_file <- paste0(outdir, "/tmp.err")
+     debug_file <- paste0(outdir, "_tmp.err")
      file.create(debug_file)
      for(i in 1:nbatch.flush) {
         gc()
@@ -688,14 +688,14 @@ rom = function(null.obj, outdir,
                         out <- out[include,]
                         tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL,   c("N","BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.INT", "SW.PVAL.JOINT")))
                         out <- cbind(out[,c("SNP","CHR","POS","REF","ALT")], tmp.out[,"N", drop = F], out[,"AF",drop=F], tmp.out[,c("BETA.MARGINAL", "SE.MARGINAL", meta.header,"PVAL.MARGINAL", "PVAL.INT", "PVAL.JOINT", "SW.PVAL.INT", "SW.PVAL.JOINT"), drop=F])
-                        write.table(out, paste0(outdir, "/res.txt"), quote=FALSE, row.names=FALSE,  col.names=FALSE, sep="\t", append=TRUE, na=".")
+                        write.table(out, outfile, quote=FALSE, row.names=FALSE,  col.names=FALSE, sep="\t", append=TRUE, na=".")
                     }
                 } else {
                     if (any(include)) {
                         out <- out[include,]
                         tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL, c("N",   "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.INT", "SW.PVAL.JOINT")))
                         out <- cbind(out[,c("SNP","CHR","POS","REF","ALT")], tmp.out[,"N", drop = F], out[,"AF",drop=F],   tmp.out[,c( "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.INT", "SW.PVAL.JOINT"), drop = F])
-                        write.table(out, paste0(outdir, "/res.txt"), quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t", append=TRUE, na=".")
+                        write.table(out, outfile, quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t", append=TRUE, na=".")
                     }
                 }
         
@@ -705,7 +705,7 @@ rom = function(null.obj, outdir,
       SeqArray::seqClose(gds)
 
     }
-    if(!verbose) unlink(paste0(outdir, ".err"))
+    if(!verbose) unlink(paste0(outfile, ".err"))
     return(invisible(NULL))
     
 }

@@ -6,7 +6,7 @@
 \usage{
 rom(
   null.obj,
-  outdir,
+  outfile,
   interaction,
   geno.file,
   interaction.covariates = NULL,
@@ -25,7 +25,7 @@ rom(
 \arguments{
 \item{null.obj}{The 'glmmkin' class object. Please use sparse kinship matrix (e.g. dsTMatrix class) when fit null model with 'glmmkin' function in GMMAT package}
 
-\item{outdir}{the directory name of outfile res.txt}
+\item{outfile}{the directory name of outfile res.txt}
 
 \item{interaction}{a vector contains indices or variable name of the environmental factors}
 
