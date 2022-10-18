@@ -34,11 +34,11 @@ rom = function(null.obj, outfile,
     if(meta.output) stop("Error: currently meta output not yet supported...")
     #if(!is.na(null.obj$P)) stop("Error: Please use sparse kinship matrix when fitting the null model")
   
-    if (!dir.exists(outfile)){
-        dir.create(outfile)
-    } else {
-        print("Dir already exists!")
-    }
+    #if (!dir.exists(outfile)){
+    #    dir.create(outfile)
+    #} else {
+    #    print("Dir already exists!")
+    #}
     
     # data manipulation and cleaning
     n.pheno <- null.obj$n.pheno # types of phenotype
@@ -415,7 +415,7 @@ rom = function(null.obj, outfile,
                 SeqArray::seqClose(geno.file)
         }
         for(b in 1:ncores) {
-            system(paste0("cat ", outfile, "_tmp.", b, ".txt", " >> ", paste0(outfile, "/res.txt")))
+            system(paste0("cat ", outfile, "_tmp.", b, ".txt", " >> ", outfile))
             system(paste0("cat ", outfile, "_tmp.", b , ".err", " >> ", outfile, ".err"))
             unlink(paste0(outfile, "_tmp.", b, ".txt"))
             unlink(paste0(outfile, "_tmp.", b , ".err"))
