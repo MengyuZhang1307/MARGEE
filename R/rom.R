@@ -52,8 +52,7 @@ rom = function(null.obj, outfile,
     ei <- length(interaction)
     qi <- length(interaction.covariates)
     ei1 <- ei+1
-    nfam = length(unique(related.id))
-    print(paste0("There are ", nfam, " families"))
+    
     if(inherits(interaction,"character")) {
         if(!is.null(interaction.covariates)) {
             if(any(interaction.covariates %in% interaction)) {stop("there are interaction.covariates also specified as interaction.")}
@@ -101,6 +100,8 @@ rom = function(null.obj, outfile,
     }
     null.obj$X <- null.obj$X[match.id, , drop = FALSE]
     related.id <- related.id[match.id]
+    nfam = length(unique(related.id))
+    print(paste0("There are ", nfam, " families"))
 
     Ebin<-apply(as.matrix(E),2,function(x) length(unique(x))<=20)
 
@@ -227,14 +228,19 @@ rom = function(null.obj, outfile,
                         freq <- colMeans(geno, na.rm = TRUE)/2
                         if(any(duplicated(null.obj$id_include))) geno <- crossprod(J, geno)
                         N <- nrow(geno) - colSums(is.na(geno))
-                        AF.strata.min <- AF.strata.max <- rep(NA, ng)
-                    ## alleles freq??
                         if(!is.null(strata.list)) { # E is not continuous
-                            #freq_strata <- apply(geno,2,function(x) range(tapply(x,strata,mean,na.rm=TRUE)/2))
                             freq.tmp <- sapply(strata.list, function(x) colMeans(geno[x, , drop = FALSE], na.rm = TRUE)/2)
-                            if (length(dim(freq.tmp)) == 2) freq_strata <- apply(freq.tmp, 1, range) else freq_strata <- as.matrix(range(freq.tmp))
-                            AF.strata.min <- freq_strata[1,]
-                            AF.strata.max <- freq_strata[2,]
+                            if(is.null(ncol(freq.tmp))) freq.tmp <- matrix(freq.tmp, nrow = 1, dimnames = list(NULL, names(freq.tmp)))
+                            n.tmp <- sapply(strata.list, function(x) colSums(!is.na(geno[x, , drop = FALSE])))
+                            if(is.null(ncol(n.tmp))) n.tmp <- matrix(n.tmp, nrow = 1, dimnames = list(NULL, names(n.tmp)))
+                            freq.tmp.rev<-freq.tmp[,order(ncol(freq.tmp):1),drop=FALSE]
+                            n.tmp.rev<-n.tmp[,order(ncol(n.tmp):1),drop=FALSE]
+                            # combine the freq.tmp and n.tmp by alterating columns
+                            rows.freq_N<-nrow(freq.tmp)
+                            cols.freq_N<-ncol(freq.tmp)+ncol(n.tmp)
+                            freq_N<-matrix(NA,nrow =rows.freq_N,ncol=cols.freq_N)
+                            freq_N[,seq(1,cols.freq_N,2)]<-n.tmp
+                            freq_N[,seq(2,cols.freq_N,2)]<-freq.tmp
                         }
                     ## missing
                         miss.idx <- which(is.na(geno))
@@ -359,13 +365,63 @@ rom = function(null.obj, outfile,
                             IV.V_i <- split(IV.V_i, split_mat %x% diag(ng))
                         }
                         tmp_idx <<- tmp_idx + ng
-                      
-                        split_mat = as.matrix(split_mat[2:(ei+1),2:(ei+1)])
-                    
-                    
-                    
-                        if (length(split_mat) == 1) {
-                            return(as.matrix(rbind(N,BETA.MAIN, SE.MAIN,
+
+
+                        if (!is.null(strata.list)){
+                            if (meta.output) {
+                                return(as.matrix(rbind(N, t(freq_N), BETA.MAIN, SE.MAIN, 
+                                                diag(as.matrix(BETA.INT[1:ng,])), # Beta G;
+                                                t(do.call(cbind, lapply(2:ncolE, function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE and then Beta Covariates
+                                                t(sqrt(do.call(cbind, lapply(seq(1,ncolE*ncolE, ncolE+1), function(x) {IV.V_i[[x]]})))),
+                                                t(do.call(cbind, lapply(split_mat[lower.tri(split_mat)], function(x) {IV.V_i[[x]]}))),
+                                                t(matrix(SE.SW.INT, ncol = ei)), # GxE Robust SE
+                                                    PVAL.MAIN, # G Main pval
+                                                    PVAL.INT, # GxE pval
+                                                    PVAL.JOINT,
+                                                    SW.PVAL.INT, # GxE Robust pval
+                                                    SW.PVAL.JOINT)))
+                            } else {
+                                    split_mat <- as.matrix(split_mat[2:(ei+1),2:(ei+1)])
+                                    if (length(split_mat) == 1) {
+                                        return(as.matrix(rbind(N, t(freq_N), BETA.MAIN, SE.MAIN,
+                                                        t(do.call(cbind, lapply(2:(ei+1), function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE only
+                                                        t(sqrt(do.call(cbind,lapply(diag(split_mat), function(x) {IV.V_i[[x]]})))),   # SE Beta GxE only
+                                                        t(matrix(SE.SW.INT, ncol = ei)),
+                                                        PVAL.MAIN,
+                                                        PVAL.INT,
+                                                        PVAL.JOINT,
+                                                        SW.PVAL.INT, # Robust pval
+                                                        SW.PVAL.JOINT)))
+                                    } else {
+                                        return(as.matrix(rbind(N, t(freq_N), BETA.MAIN, SE.MAIN,
+                                                        t(do.call(cbind, lapply(2:(ei+1), function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE only
+                                                        t(sqrt(do.call(cbind,lapply(diag(split_mat), function(x) {IV.V_i[[x]]})))),   # SE Beta GxE only
+                                                        t(do.call(cbind, lapply(split_mat[lower.tri(split_mat)], function(x) {IV.V_i[[x]]}))),
+                                                        t(matrix(SE.SW.INT, ncol = ei)),
+                                                        PVAL.MAIN,
+                                                        PVAL.INT,
+                                                        PVAL.JOINT,
+                                                        SW.PVAL.INT, # Robust pval
+                                                        SW.PVAL.JOINT)))
+                                    }
+                                }
+                        } else {
+                            if (meta.output) {
+                                    return(as.matrix(rbind(N,  BETA.MAIN, SE.MAIN, 
+                                                        diag(as.matrix(BETA.INT[1:ng,])), # Beta G;
+                                                        t(do.call(cbind, lapply(2:ncolE, function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE and then Beta Covariates
+                                                        t(sqrt(do.call(cbind, lapply(seq(1,ncolE*ncolE, ncolE+1), function(x) {IV.V_i[[x]]})))),
+                                                        t(do.call(cbind, lapply(split_mat[lower.tri(split_mat)], function(x) {IV.V_i[[x]]}))),
+                                                        t(matrix(SE.SW.INT, ncol = ei)),
+                                                        PVAL.MAIN,
+                                                        PVAL.INT,
+                                                        PVAL.JOINT,
+                                                        SW.PVAL.INT, # Robust pval
+                                                        SW.PVAL.JOINT)))
+                                } else {
+                                    split_mat = as.matrix(split_mat[2:(ei+1),2:(ei+1)])
+                                    if (length(split_mat) == 1) {
+                                        return(as.matrix(rbind(N,BETA.MAIN, SE.MAIN,
                                                     t(do.call(cbind, lapply(2:(ei+1), function(x){diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxEonly 101:200
                                                     t(sqrt(do.call(cbind,lapply(diag(split_mat),function(x) {IV.V_i[[x]]})))),   # SE Beta GxEonly
                                                     t(matrix(SE.SW.INT, ncol = ei)), # GxE Robust SE
@@ -374,8 +430,8 @@ rom = function(null.obj, outfile,
                                                     PVAL.JOINT,
                                                     SW.PVAL.INT, # GxE Robust pval
                                                     SW.PVAL.JOINT)))
-                            } else {
-                                return(as.matrix(rbind(N, BETA.MAIN, SE.MAIN,
+                                        } else {
+                                            return(as.matrix(rbind(N, BETA.MAIN, SE.MAIN,
                                                         t(do.call(cbind, lapply(2:(ei+1), function(x){diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxEonly
                                                         t(sqrt(do.call(cbind,lapply(diag(split_mat),function(x) {IV.V_i[[x]]})))),   # SE BetaGxE only
                                                         t(do.call(cbind,lapply(split_mat[lower.tri(split_mat)],function(x) {IV.V_i[[x]]}))),
@@ -385,8 +441,20 @@ rom = function(null.obj, outfile,
                                                         PVAL.JOINT,
                                                         SW.PVAL.INT, # Robust pval
                                                         SW.PVAL.JOINT)))
+                                        }
+                                }
+                        }
+                      
+                        
+                    
+                    
+                    
+                        
+                            
+                            
+                                
                                                     
-                            }
+                            
                     })
                 
                 
@@ -653,30 +721,82 @@ rom = function(null.obj, outfile,
           }
           tmp_idx <<- tmp_idx + ng
             
-          split_mat = as.matrix(split_mat[2:(ei+1),2:(ei+1)])
-
-          if (length(split_mat) == 1) {
-                        return(as.matrix(rbind(N,BETA.MAIN, SE.MAIN,
-                                                t(do.call(cbind, lapply(2:(ei+1), function(x){diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxEonly 101:200
-                                                t(sqrt(do.call(cbind,lapply(diag(split_mat),function(x) {IV.V_i[[x]]})))),   # SE Beta GxEonly
+          if (!is.null(strata.list)){
+                            if (meta.output) {
+                                return(as.matrix(rbind(N, t(freq_N), BETA.MAIN, SE.MAIN, 
+                                                diag(as.matrix(BETA.INT[1:ng,])), # Beta G;
+                                                t(do.call(cbind, lapply(2:ncolE, function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE and then Beta Covariates
+                                                t(sqrt(do.call(cbind, lapply(seq(1,ncolE*ncolE, ncolE+1), function(x) {IV.V_i[[x]]})))),
+                                                t(do.call(cbind, lapply(split_mat[lower.tri(split_mat)], function(x) {IV.V_i[[x]]}))),
                                                 t(matrix(SE.SW.INT, ncol = ei)), # GxE Robust SE
-                                                PVAL.MAIN, # G Main pval
-                                                PVAL.INT, # GxE pval
-                                                PVAL.JOINT,
-                                                SW.PVAL.INT, # GxE Robust pval
-                                                SW.PVAL.JOINT)))
-                        } else {
-                            return(as.matrix(rbind(N, BETA.MAIN, SE.MAIN,
-                                                    t(do.call(cbind, lapply(2:(ei+1), function(x){diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxEonly
-                                                    t(sqrt(do.call(cbind,lapply(diag(split_mat),function(x) {IV.V_i[[x]]})))),   # SE BetaGxE only
-                                                    t(do.call(cbind,lapply(split_mat[lower.tri(split_mat)],function(x) {IV.V_i[[x]]}))),
-                                                    t(matrix(SE.SW.INT, ncol = ei)),
-                                                    PVAL.MAIN,
-                                                    PVAL.INT,
+                                                    PVAL.MAIN, # G Main pval
+                                                    PVAL.INT, # GxE pval
                                                     PVAL.JOINT,
-                                                    SW.PVAL.INT, # Robust pval
+                                                    SW.PVAL.INT, # GxE Robust pval
                                                     SW.PVAL.JOINT)))
-                                                    
+                            } else {
+                                    split_mat <- as.matrix(split_mat[2:(ei+1),2:(ei+1)])
+                                    if (length(split_mat) == 1) {
+                                        return(as.matrix(rbind(N, t(freq_N), BETA.MAIN, SE.MAIN,
+                                                        t(do.call(cbind, lapply(2:(ei+1), function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE only
+                                                        t(sqrt(do.call(cbind,lapply(diag(split_mat), function(x) {IV.V_i[[x]]})))),   # SE Beta GxE only
+                                                        t(matrix(SE.SW.INT, ncol = ei)),
+                                                        PVAL.MAIN,
+                                                        PVAL.INT,
+                                                        PVAL.JOINT,
+                                                        SW.PVAL.INT, # Robust pval
+                                                        SW.PVAL.JOINT)))
+                                    } else {
+                                        return(as.matrix(rbind(N, t(freq_N), BETA.MAIN, SE.MAIN,
+                                                        t(do.call(cbind, lapply(2:(ei+1), function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE only
+                                                        t(sqrt(do.call(cbind,lapply(diag(split_mat), function(x) {IV.V_i[[x]]})))),   # SE Beta GxE only
+                                                        t(do.call(cbind, lapply(split_mat[lower.tri(split_mat)], function(x) {IV.V_i[[x]]}))),
+                                                        t(matrix(SE.SW.INT, ncol = ei)),
+                                                        PVAL.MAIN,
+                                                        PVAL.INT,
+                                                        PVAL.JOINT,
+                                                        SW.PVAL.INT, # Robust pval
+                                                        SW.PVAL.JOINT)))
+                                    }
+                                }
+                        } else {
+                            if (meta.output) {
+                                    return(as.matrix(rbind(N,  BETA.MAIN, SE.MAIN, 
+                                                        diag(as.matrix(BETA.INT[1:ng,])), # Beta G;
+                                                        t(do.call(cbind, lapply(2:ncolE, function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE and then Beta Covariates
+                                                        t(sqrt(do.call(cbind, lapply(seq(1,ncolE*ncolE, ncolE+1), function(x) {IV.V_i[[x]]})))),
+                                                        t(do.call(cbind, lapply(split_mat[lower.tri(split_mat)], function(x) {IV.V_i[[x]]}))),
+                                                        t(matrix(SE.SW.INT, ncol = ei)),
+                                                        PVAL.MAIN,
+                                                        PVAL.INT,
+                                                        PVAL.JOINT,
+                                                        SW.PVAL.INT, # Robust pval
+                                                        SW.PVAL.JOINT)))
+                                } else {
+                                    split_mat = as.matrix(split_mat[2:(ei+1),2:(ei+1)])
+                                    if (length(split_mat) == 1) {
+                                        return(as.matrix(rbind(N,BETA.MAIN, SE.MAIN,
+                                                    t(do.call(cbind, lapply(2:(ei+1), function(x){diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxEonly 101:200
+                                                    t(sqrt(do.call(cbind,lapply(diag(split_mat),function(x) {IV.V_i[[x]]})))),   # SE Beta GxEonly
+                                                    t(matrix(SE.SW.INT, ncol = ei)), # GxE Robust SE
+                                                    PVAL.MAIN, # G Main pval
+                                                    PVAL.INT, # GxE pval
+                                                    PVAL.JOINT,
+                                                    SW.PVAL.INT, # GxE Robust pval
+                                                    SW.PVAL.JOINT)))
+                                        } else {
+                                            return(as.matrix(rbind(N, BETA.MAIN, SE.MAIN,
+                                                        t(do.call(cbind, lapply(2:(ei+1), function(x){diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxEonly
+                                                        t(sqrt(do.call(cbind,lapply(diag(split_mat),function(x) {IV.V_i[[x]]})))),   # SE BetaGxE only
+                                                        t(do.call(cbind,lapply(split_mat[lower.tri(split_mat)],function(x) {IV.V_i[[x]]}))),
+                                                        t(matrix(SE.SW.INT, ncol = ei)),
+                                                        PVAL.MAIN,
+                                                        PVAL.INT,
+                                                        PVAL.JOINT,
+                                                        SW.PVAL.INT, # Robust pval
+                                                        SW.PVAL.JOINT)))
+                                        }
+                                }
                         }
           
         })
