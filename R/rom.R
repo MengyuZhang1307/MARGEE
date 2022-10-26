@@ -805,11 +805,11 @@ rom = function(null.obj, outfile,
 
         if (!is.null(strata.list)){ ## tbd
                     if (any(include)) {
-                        out <- out[include,]
-                        tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL,   c("N","BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.INT", "SW.PVAL.JOINT")))
-                        out <- cbind(out[,c("SNP","CHR","POS","REF","ALT")], tmp.out[,"N", drop = F], out[,"AF",drop=F], tmp.out[,c("BETA.MARGINAL", "SE.MARGINAL", meta.header,"PVAL.MARGINAL", "PVAL.INT", "PVAL.JOINT", "SW.PVAL.INT", "SW.PVAL.JOINT"), drop=F])
-                        write.table(out, outfile, quote=FALSE, row.names=FALSE,  col.names=FALSE, sep="\t", append=TRUE, na=".")
-                    }
+                            out <- out[include,]
+                            tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL,   c("N", bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.INT", "SW.PVAL.JOINT")))
+                            out <- cbind(out[,c("SNP","CHR","POS","REF","ALT")], tmp.out[,"N", drop = F], out[,"AF",drop=F], tmp.out[,c(bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header,"PVAL.MARGINAL", "PVAL.INT", "PVAL.JOINT", "SW.PVAL.INT", "SW.PVAL.JOINT"), drop=F])
+                            write.table(out, paste0(outfile, "_tmp.", b, ".txt"), quote=FALSE, row.names=FALSE,  col.names=FALSE, sep="\t", append=TRUE, na=".")
+                        }
                 } else {
                     if (any(include)) {
                         out <- out[include,]
