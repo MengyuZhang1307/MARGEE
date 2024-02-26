@@ -1,7 +1,7 @@
 #' Robust Mixed-model Association Test for Gene-Environment Interaction
 #'
 #' Perform single variant robust gene-environment interaction test and joint test for common variants
-#' @docType package
+#' @docType _PACKAGE
 #' @import foreach
 #' @import parallel
 #' @import Matrix
