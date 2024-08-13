@@ -242,18 +242,18 @@ rom = function(null.obj, outfile,
                             freq_N[,seq(1,cols.freq_N,2)]<-n.tmp
                             freq_N[,seq(2,cols.freq_N,2)]<-freq.tmp
                         }
-                    ## missing
+                    
                         miss.idx <- which(is.na(geno))
                         if(length(miss.idx)>0) {
                             geno[miss.idx] <- if(missing.method == "impute2mean") 2*freq[ceiling(miss.idx/nrow(geno))] else NA
                         }
                         if(center) geno <- scale(geno, scale = FALSE)
                         miss.idx <- which(is.na(geno))
-                        if(length(miss.idx)>0) { # omit
+                        if(length(miss.idx)>0) {
                             geno[miss.idx] <- 0
                         }
-                    ##
-                        K <- do.call(cbind, sapply(1:ncolE, function(xx) geno*E[,xx], simplify = FALSE), envir = environment()) # geno1 geno2 g1*E1 g2*E1 g1*E2 g2*E2
+                    
+                        K <- do.call(cbind, sapply(1:ncolE, function(xx) geno*E[,xx], simplify = FALSE), envir = environment()) 
                         U <- as.vector(crossprod(geno, residuals))
                         if(!is.null(null.obj$P)) {
                             PG <- crossprod(null.obj$P, geno)
@@ -262,12 +262,12 @@ rom = function(null.obj, outfile,
                             PG <- crossprod(null.obj$Sigma_i, geno) - tcrossprod(null.obj$Sigma_iX, tcrossprod(GSigma_iX, null.obj$cov))
                         }
 
-                        GPG <- as.matrix(crossprod(geno, PG)) * (matrix(1, 1, 1) %x% diag(ng)) #### single variant diagonal matrix 2x2
+                        GPG <- as.matrix(crossprod(geno, PG)) * (matrix(1, 1, 1) %x% diag(ng)) 
                         GPG_i <- try(solve(GPG), silent = TRUE)
                         if(class(GPG_i)[1] == "try-error") GPG_i <- MASS::ginv(GPG)
                         V_i <- diag(GPG_i)
 
-                        BETA.MAIN <- V_i * U # for 2 snps
+                        BETA.MAIN <- V_i * U 
                         SE.MAIN   <- sqrt(V_i)
                         STAT.MAIN <- BETA.MAIN * U
                         PVAL.MAIN <- ifelse(V_i>0, pchisq(STAT.MAIN, df=1, lower.tail=FALSE), NA)
@@ -283,7 +283,7 @@ rom = function(null.obj, outfile,
                         }
                         KPK <- as.matrix(KPK) * (matrix(1, ncolE, ncolE) %x% diag(ng))
 
-                        IV.V_i <- try(solve(KPK), silent = TRUE) # 6x6
+                        IV.V_i <- try(solve(KPK), silent = TRUE)
                         if(class(IV.V_i)[1] == "try-error") IV.V_i <- try(MASS::ginv(KPK), silent = TRUE)
                         if (class(IV.V_i)[1] == "try-error") {
                             fix_out <- fix.dgesdd(gds, out, debug_file, null.obj, J, residuals, tmp2.variant.idx, meta.output, center, missing.method, strata.list, ncolE, E, ei, meta.header, totalCol, tmp_idx, include)
@@ -293,12 +293,12 @@ rom = function(null.obj, outfile,
                         }
 
                         IV.U <- (rep(1, ncolE) %x% diag(ng)) * as.vector(crossprod(K,residuals))
-                        BETA.INT <- crossprod(IV.V_i, IV.U) #geno effect and interaction effect. Columns: snp1 effect and snp2 effect.
+                        BETA.INT <- crossprod(IV.V_i, IV.U) 
 
                         ng1   <- ng+1
                         ngei1 <- ng*ei1
 
-                        IV.E_i <- try(solve(IV.V_i[ng1:ngei1, ng1:ngei1]), silent = TRUE) #4x4
+                        IV.E_i <- try(solve(IV.V_i[ng1:ngei1, ng1:ngei1]), silent = TRUE)
                         if(class(IV.E_i)[1] == "try-error") IV.E_i <-try(MASS::ginv(IV.V_i[ng1:ngei1, ng1:ngei1]), silent = TRUE)
                         if(class(IV.E_i)[1] == "try-error") {
                             fix_out <- fix.dgesdd(gds, out, debug_file, null.obj, J, residuals,tmp2.variant.idx, meta.output, center, missing.method, strata.list,ncolE, E, ei, meta.header, totalCol, tmp_idx, include)
@@ -325,12 +325,12 @@ rom = function(null.obj, outfile,
                     # Adjusted for covariates X
                     
                     
-                        GK_X = K - tcrossprod(null.obj$X,tcrossprod(crossprod(K,null.obj$Sigma_iX),null.obj$cov)) # joint Nx(pxei+p)
+                        GK_X = K - tcrossprod(null.obj$X,tcrossprod(crossprod(K,null.obj$Sigma_iX),null.obj$cov))
                         if(!is.null(null.obj$P)) {
                             PK <- crossprod(null.obj$P,K)
                         } else {
                             PK <- crossprod(null.obj$Sigma_i, K) - tcrossprod(null.obj$Sigma_iX,tcrossprod(KSigma_iX,  null.obj$cov))
-                        } # N x (ei+1)*np
+                        } 
                     
             
                         true_Residuals = residuals - crossprod(t(PK),(rep(1, ncolE) %x% diag(ng)) * as.vector(tcrossprod(crossprod(residuals,K),IV.V_i))) # residual adjusted for X, G and K. Dim: N x nperbatch (np)
@@ -346,14 +346,20 @@ rom = function(null.obj, outfile,
                         joint_cov = crossprod(IV.V_i, crossprod(M, IV.V_i))
                       
                         SE.SW.INT = if (ei == 1 & ng == 1) sqrt(joint_cov[ng1:ngei1,ng1:ngei1]) else sqrt(diag(joint_cov[ng1:ngei1,ng1:ngei1]))
-                    #SE.SW.JOINT = sqrt(diag(joint_cov))
                     
-                        SW.STAT.INT = diag(crossprod(BETA.INT[ng1:ngei1,],crossprod(solve(joint_cov[ng1:ngei1,ng1:ngei1]), BETA.INT[ng1:ngei1,])))
+                        
+                        joint_cov.E_i <- try(solve(joint_cov[ng1:ngei1,ng1:ngei1]), silent = TRUE) #4x4
+                        if(class(joint_cov.E_i)[1] == "try-error") joint_cov.E_i <- MASS::ginv(joint_cov[ng1:ngei1,ng1:ngei1])
+                        
+                        SW.STAT.INT = diag(crossprod(BETA.INT[ng1:ngei1,],crossprod(joint_cov.E_i, BETA.INT[ng1:ngei1,])))
                         SW.PVAL.INT = pchisq(SW.STAT.INT, df=ei, lower.tail=FALSE)
                         SW.PVAL.INT = ifelse(SW.PVAL.INT == 0, NA, SW.PVAL.INT)
-                    #interaction covariates 30 min
                     
-                        SW.STAT.JOINT = diag(crossprod(BETA.INT[1:ngei1,], crossprod(solve(joint_cov[1:ngei1,1:ngei1]), BETA.INT[1:ngei1,])))
+                        
+                        joint_cov.GE_i <- try(solve(joint_cov[1:ngei1,1:ngei1]), silent = TRUE) #4x4
+                        if(class(joint_cov.GE_i)[1] == "try-error") joint_cov.GE_i <- MASS::ginv(joint_cov[1:ngei1,1:ngei1])
+                       
+                        SW.STAT.JOINT = diag(crossprod(BETA.INT[1:ngei1,], crossprod(joint_cov.GE_i, BETA.INT[1:ngei1,])))
                         SW.PVAL.JOINT = ifelse(is.na(PVAL.MAIN), NA, pchisq(SW.STAT.JOINT, df=1+ei,lower.tail=FALSE))
                         SW.PVAL.JOINT = ifelse(SW.PVAL.JOINT == 0, NA, SW.PVAL.JOINT)
                     
