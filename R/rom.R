@@ -343,7 +343,7 @@ rom = function(null.obj, outfile,
                         M[setdiff(1:((ei1+qi)*ng)^2, batchindex)] = 0
                     
                     
-                        joint_cov = crossprod(IV.V_i, crossprod(M, IV.V_i))
+                        joint_cov = as.matrix(crossprod(IV.V_i, crossprod(M, IV.V_i)))
                       
                         SE.SW.INT = if (ei == 1 & ng == 1) sqrt(joint_cov[ng1:ngei1,ng1:ngei1]) else sqrt(diag(joint_cov[ng1:ngei1,ng1:ngei1]))
                     
@@ -703,7 +703,7 @@ rom = function(null.obj, outfile,
           M[setdiff(1:((ei1+qi)*ng)^2, batchindex)] = 0
           
           
-          joint_cov = crossprod(IV.V_i, crossprod(M, IV.V_i))
+          joint_cov = as.matrix(crossprod(IV.V_i, crossprod(M, IV.V_i)))
             
           SE.SW.INT = if (ei == 1 & ng == 1) sqrt(joint_cov[ng1:ngei1,ng1:ngei1]) else sqrt(diag(joint_cov[ng1:ngei1,ng1:ngei1]))
           #SE.SW.JOINT = sqrt(diag(joint_cov))
