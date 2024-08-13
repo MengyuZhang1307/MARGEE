@@ -707,13 +707,19 @@ rom = function(null.obj, outfile,
             
           SE.SW.INT = if (ei == 1 & ng == 1) sqrt(joint_cov[ng1:ngei1,ng1:ngei1]) else sqrt(diag(joint_cov[ng1:ngei1,ng1:ngei1]))
           #SE.SW.JOINT = sqrt(diag(joint_cov))
+
+          joint_cov.E_i <- try(solve(joint_cov[ng1:ngei1,ng1:ngei1]), silent = TRUE) #4x4
+          if(class(joint_cov.E_i)[1] == "try-error") joint_cov.E_i <- MASS::ginv(joint_cov[ng1:ngei1,ng1:ngei1])
           
-          SW.STAT.INT = diag(crossprod(BETA.INT[ng1:ngei1,],crossprod(solve(joint_cov[ng1:ngei1,ng1:ngei1]), BETA.INT[ng1:ngei1,])))
+          SW.STAT.INT = diag(crossprod(BETA.INT[ng1:ngei1,],crossprod(joint_cov.E_i, BETA.INT[ng1:ngei1,])))
           SW.PVAL.INT = pchisq(SW.STAT.INT, df=ei, lower.tail=FALSE)
           SW.PVAL.INT = ifelse(SW.PVAL.INT == 0, NA, SW.PVAL.INT)
           #interaction covariates 30 min
           
-          SW.STAT.JOINT = diag(crossprod(BETA.INT[1:ngei1,], crossprod(solve(joint_cov[1:ngei1,1:ngei1]), BETA.INT[1:ngei1,])))
+          joint_cov.GE_i <- try(solve(joint_cov[1:ngei1,1:ngei1]), silent = TRUE) #4x4
+          if(class(joint_cov.GE_i)[1] == "try-error") joint_cov.GE_i <- MASS::ginv(joint_cov[1:ngei1,1:ngei1])
+          
+          SW.STAT.JOINT = diag(crossprod(BETA.INT[1:ngei1,], crossprod(joint_cov.GE_i, BETA.INT[1:ngei1,])))                        
           SW.PVAL.JOINT = ifelse(is.na(PVAL.MAIN), NA, pchisq(SW.STAT.JOINT, df=1+ei,lower.tail=FALSE))
           SW.PVAL.JOINT = ifelse(SW.PVAL.JOINT == 0, NA, SW.PVAL.JOINT)
           
