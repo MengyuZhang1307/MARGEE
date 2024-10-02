@@ -354,7 +354,7 @@ rom = function(null.obj, outfile,
                         
                         SW.STAT.MAIN = diag(crossprod(BETA.INT[1:ng,],crossprod(joint_cov.G_i, BETA.INT[1:ng,])))
                         SW.PVAL.MAIN = pchisq(SW.STAT.MAIN, df=ei, lower.tail=FALSE)
-                        SW.PVAL.MAIN = ifelse(SW.PVAL.MAIN == 0, NA, SW.PVAL.INT)
+                        SW.PVAL.MAIN = ifelse(SW.PVAL.MAIN == 0, NA, SW.PVAL.MAIN)
                     
                         
                         joint_cov.E_i <- try(solve(joint_cov[ng1:ngei1,ng1:ngei1]), silent = TRUE) #4x4
@@ -734,7 +734,7 @@ rom = function(null.obj, outfile,
                         
           SW.STAT.MAIN = diag(crossprod(BETA.INT[1:ng,],crossprod(joint_cov.G_i, BETA.INT[1:ng,])))
           SW.PVAL.MAIN = pchisq(SW.STAT.MAIN, df=ei, lower.tail=FALSE)
-          SW.PVAL.MAIN = ifelse(SW.PVAL.MAIN == 0, NA, SW.PVAL.INT)
+          SW.PVAL.MAIN = ifelse(SW.PVAL.MAIN == 0, NA, SW.PVAL.MAIN)
                     
 
           joint_cov.E_i <- try(solve(joint_cov[ng1:ngei1,ng1:ngei1]), silent = TRUE) #4x4
