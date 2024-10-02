@@ -147,14 +147,14 @@ rom = function(null.obj, outfile,
         if (meta.output) { #tbd
             interaction2 <- c("G", paste0("G-", interaction))
             cov.header = matrix(paste(rep(paste0("Cov_Beta_", interaction2), each = ncolE), interaction2, sep = "_"),ncolE, ncolE)
-            meta.header = c(paste0("Beta_", interaction2), paste0("SE_Beta_", interaction2),cov.header[lower.tri(cov.header)])
+            meta.header = c(paste0("Beta_", interaction2), paste0("SE_Beta_", interaction2),cov.header[lower.tri(cov.header)],paste0("Robust_SE_BETA_", interaction2[1:ei]))
         
             if (is.null(strata.list))
             {
-                totalCol =  11 + 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2)
+                totalCol =  10 + 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2 + ei)
             }
             else {
-                totalCol =  11 +2*length(unique(strata))+ 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2)
+                totalCol =  10 +2*length(unique(strata))+ 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2 + ei)
             }
         } else {
             interaction2 <- paste0("G-", interaction[1:ei])
@@ -165,8 +165,8 @@ rom = function(null.obj, outfile,
                 meta.header = c(paste0("Beta_", interaction2), paste0("SE_Beta_", interaction2),paste0("Robust_SE_BETA_", interaction2))
             }
         
-            if (is.null(strata.list)) {totalCol = 9 + ei + ei + ei * (ei - 1) / 2 }
-            else {totalCol = 9 +2*length(unique(strata))+ ei + ei + ei * (ei - 1) / 2 }
+            if (is.null(strata.list)) {totalCol = 8 + ei + ei + ei * (ei - 1) / 2 + ei }
+            else {totalCol = 8 +2*length(unique(strata))+ ei + ei + ei * (ei - 1) / 2 + ei }
         }
 
         if (is.null(strata.list)){
@@ -508,14 +508,14 @@ rom = function(null.obj, outfile,
         if (meta.output) { #tbd
          interaction2 <- c("G", paste0("G-", interaction))
          cov.header = matrix(paste(rep(paste0("Cov_Beta_", interaction2), each = ncolE), interaction2, sep = "_"),ncolE, ncolE)
-         meta.header = c(paste0("Beta_", interaction2), paste0("SE_Beta_", interaction2),cov.header[lower.tri(cov.header)])
+         meta.header = c(paste0("Beta_", interaction2), paste0("SE_Beta_", interaction2),cov.header[lower.tri(cov.header)], ,paste0("Robust_SE_BETA_", interaction2[1:ei]))
          
          if (is.null(strata.list))
          {
-             totalCol =  11 + 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2)
+             totalCol =  10 + 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2 + ei)
          }
          else {
-             totalCol =  11 +2*length(unique(strata))+ 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2)
+             totalCol =  10 +2*length(unique(strata))+ 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2 + ei)
          }
         } else {
          interaction2 <- paste0("G-", interaction[1:ei])
@@ -526,8 +526,8 @@ rom = function(null.obj, outfile,
              meta.header = c(paste0("Beta_", interaction2), paste0("SE_Beta_", interaction2),paste0("Robust_SE_BETA_", interaction2))
          }
          
-         if (is.null(strata.list)) {totalCol = 9 + ei + ei + ei * (ei - 1) / 2 }
-         else {totalCol = 9 +2*length(unique(strata))+ ei + ei + ei * (ei - 1) / 2 }
+         if (is.null(strata.list)) {totalCol = 8 + ei + ei + ei * (ei - 1) / 2 + ei}
+         else {totalCol = 8 +2*length(unique(strata))+ ei + ei + ei * (ei - 1) / 2 + ei}
         }  
  
      if (is.null(strata.list)){
