@@ -151,10 +151,10 @@ rom = function(null.obj, outfile,
         
             if (is.null(strata.list))
             {
-                totalCol =  9 + 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2)
+                totalCol =  11 + 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2)
             }
             else {
-                totalCol =  9 +2*length(unique(strata))+ 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2)
+                totalCol =  11 +2*length(unique(strata))+ 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2)
             }
         } else {
             interaction2 <- paste0("G-", interaction[1:ei])
@@ -165,8 +165,8 @@ rom = function(null.obj, outfile,
                 meta.header = c(paste0("Beta_", interaction2), paste0("SE_Beta_", interaction2),paste0("Robust_SE_BETA_", interaction2))
             }
         
-            if (is.null(strata.list)) {totalCol = 8 + 3*ei + ei * (ei - 1) / 2 }
-            else {totalCol = 8 +2*length(unique(strata))+ 3*ei + ei * (ei - 1) / 2 }
+            if (is.null(strata.list)) {totalCol = 9 + ei + ei + ei * (ei - 1) / 2 }
+            else {totalCol = 9 +2*length(unique(strata))+ ei + ei + ei * (ei - 1) / 2 }
         }
 
         if (is.null(strata.list)){
@@ -512,10 +512,10 @@ rom = function(null.obj, outfile,
          
          if (is.null(strata.list))
          {
-             totalCol =  9 + 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2)
+             totalCol =  11 + 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2)
          }
          else {
-             totalCol =  9 +2*length(unique(strata))+ 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2)
+             totalCol =  11 +2*length(unique(strata))+ 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2)
          }
         } else {
          interaction2 <- paste0("G-", interaction[1:ei])
@@ -526,8 +526,8 @@ rom = function(null.obj, outfile,
              meta.header = c(paste0("Beta_", interaction2), paste0("SE_Beta_", interaction2),paste0("Robust_SE_BETA_", interaction2))
          }
          
-         if (is.null(strata.list)) {totalCol = 8 + 3*ei + ei * (ei - 1) / 2 }
-         else {totalCol = 8 +2*length(unique(strata))+ 3*ei + ei * (ei - 1) / 2 }
+         if (is.null(strata.list)) {totalCol = 9 + ei + ei + ei * (ei - 1) / 2 }
+         else {totalCol = 9 +2*length(unique(strata))+ ei + ei + ei * (ei - 1) / 2 }
         }  
  
      if (is.null(strata.list)){
