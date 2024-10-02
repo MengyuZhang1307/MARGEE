@@ -151,10 +151,10 @@ rom = function(null.obj, outfile,
         
             if (is.null(strata.list))
             {
-                totalCol =  10 + 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2 + ei)
+                totalCol =  11 + 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2 + ei)
             }
             else {
-                totalCol =  10 +2*length(unique(strata))+ 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2 + ei)
+                totalCol =  11 +2*length(unique(strata))+ 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2 + ei)
             }
         } else {
             interaction2 <- paste0("G-", interaction[1:ei])
@@ -165,14 +165,14 @@ rom = function(null.obj, outfile,
                 meta.header = c(paste0("Beta_", interaction2), paste0("SE_Beta_", interaction2),paste0("Robust_SE_BETA_", interaction2))
             }
         
-            if (is.null(strata.list)) {totalCol = 8 + ei + ei + ei * (ei - 1) / 2 + ei }
-            else {totalCol = 8 +2*length(unique(strata))+ ei + ei + ei * (ei - 1) / 2 + ei }
+            if (is.null(strata.list)) {totalCol = 9 + ei + ei + ei * (ei - 1) / 2 + ei }
+            else {totalCol = 9 +2*length(unique(strata))+ ei + ei + ei * (ei - 1) / 2 + ei }
         }
 
         if (is.null(strata.list)){
-            write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal", "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), outfile, quote = F, col.names = F, row.names = F, sep="\t")
+            write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal", "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Main", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), outfile, quote = F, col.names = F, row.names = F, sep="\t")
         } else {
-            write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", bin_header, "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal",  "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), outfile, quote = F, col.names = F, row.names = F, sep="\t")
+            write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", bin_header, "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal",  "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Main", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), outfile, quote = F, col.names = F, row.names = F, sep="\t")
         }
 # b = 1
         foreach(b=1:ncores, .inorder=FALSE, .options.multicore = list(preschedule = FALSE, set.seed = FALSE)) %dopar% {
@@ -344,8 +344,17 @@ rom = function(null.obj, outfile,
                     
                     
                         joint_cov = as.matrix(crossprod(IV.V_i, crossprod(M, IV.V_i)))
-                      
+                        
+                        SE.SW.MAIN = if (ei == 1 & ng == 1) sqrt(joint_cov[1:ng,1:ng]) else sqrt(diag(joint_cov[1:ng,1:ng]))
+                    
                         SE.SW.INT = if (ei == 1 & ng == 1) sqrt(joint_cov[ng1:ngei1,ng1:ngei1]) else sqrt(diag(joint_cov[ng1:ngei1,ng1:ngei1]))
+                        
+                        joint_cov.G_i <- try(solve(joint_cov[1:ng,1:ng]), silent = TRUE) #4x4
+                        if(class(joint_cov.G_i)[1] == "try-error") joint_cov.G_i <- MASS::ginv(joint_cov[1:ng,1:ng])
+                        
+                        SW.STAT.MAIN = diag(crossprod(BETA.INT[1:ng,],crossprod(joint_cov.G_i, BETA.INT[1:ng,])))
+                        SW.PVAL.MAIN = pchisq(SW.STAT.MAIN, df=ei, lower.tail=FALSE)
+                        SW.PVAL.MAIN = ifelse(SW.PVAL.MAIN == 0, NA, SW.PVAL.INT)
                     
                         
                         joint_cov.E_i <- try(solve(joint_cov[ng1:ngei1,ng1:ngei1]), silent = TRUE) #4x4
@@ -367,8 +376,10 @@ rom = function(null.obj, outfile,
                         split_mat <- matrix(1:(ncolE*ncolE), ncolE, ncolE)
                         if (ng > 1) {
                             IV.V_i <- split(IV.V_i, split_mat %x% diag(ng))[-1]
+                            joint_cov <- split(joint_cov, split_mat %x% diag(ng))[-1]
                         }else {
                             IV.V_i <- split(IV.V_i, split_mat %x% diag(ng))
+                            joint_cov <- split(joint_cov, split_mat %x% diag(ng))
                         }
                         tmp_idx <<- tmp_idx + ng
 
@@ -380,10 +391,12 @@ rom = function(null.obj, outfile,
                                                 t(do.call(cbind, lapply(2:ncolE, function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE and then Beta Covariates
                                                 t(sqrt(do.call(cbind, lapply(seq(1,ncolE*ncolE, ncolE+1), function(x) {IV.V_i[[x]]})))),
                                                 t(do.call(cbind, lapply(split_mat[lower.tri(split_mat)], function(x) {IV.V_i[[x]]}))),
+                                                t(matrix(SE.SW.MAIN, ncol = ei)), # G Robust SE
                                                 t(matrix(SE.SW.INT, ncol = ei)), # GxE Robust SE
                                                     PVAL.MAIN, # G Main pval
                                                     PVAL.INT, # GxE pval
                                                     PVAL.JOINT,
+                                                    SW.PVAL.MAIN
                                                     SW.PVAL.INT, # GxE Robust pval
                                                     SW.PVAL.JOINT)))
                             } else {
@@ -396,6 +409,7 @@ rom = function(null.obj, outfile,
                                                         PVAL.MAIN,
                                                         PVAL.INT,
                                                         PVAL.JOINT,
+                                                        SW.PVAL.MAIN
                                                         SW.PVAL.INT, # Robust pval
                                                         SW.PVAL.JOINT)))
                                     } else {
@@ -407,6 +421,7 @@ rom = function(null.obj, outfile,
                                                         PVAL.MAIN,
                                                         PVAL.INT,
                                                         PVAL.JOINT,
+                                                        SW.PVAL.MAIN
                                                         SW.PVAL.INT, # Robust pval
                                                         SW.PVAL.JOINT)))
                                     }
@@ -422,6 +437,7 @@ rom = function(null.obj, outfile,
                                                         PVAL.MAIN,
                                                         PVAL.INT,
                                                         PVAL.JOINT,
+                                                        SW.PVAL.MAIN
                                                         SW.PVAL.INT, # Robust pval
                                                         SW.PVAL.JOINT)))
                                 } else {
@@ -434,6 +450,7 @@ rom = function(null.obj, outfile,
                                                     PVAL.MAIN, # G Main pval
                                                     PVAL.INT, # GxE pval
                                                     PVAL.JOINT,
+                                                    SW.PVAL.MAIN
                                                     SW.PVAL.INT, # GxE Robust pval
                                                     SW.PVAL.JOINT)))
                                         } else {
@@ -445,6 +462,7 @@ rom = function(null.obj, outfile,
                                                         PVAL.MAIN,
                                                         PVAL.INT,
                                                         PVAL.JOINT,
+                                                        SW.PVAL.MAIN
                                                         SW.PVAL.INT, # Robust pval
                                                         SW.PVAL.JOINT)))
                                         }
@@ -467,15 +485,15 @@ rom = function(null.obj, outfile,
                     if (!is.null(strata.list)){ ## tbd
                         if (any(include)) {
                             out <- out[include,]
-                            tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL,   c("N", bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.INT", "SW.PVAL.JOINT")))
-                            out <- cbind(out[,c("SNP","CHR","POS","REF","ALT")], tmp.out[,"N", drop = F], out[,"AF",drop=F], tmp.out[,c(bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header,"PVAL.MARGINAL", "PVAL.INT", "PVAL.JOINT", "SW.PVAL.INT", "SW.PVAL.JOINT"), drop=F])
+                            tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL,   c("N", bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT")))
+                            out <- cbind(out[,c("SNP","CHR","POS","REF","ALT")], tmp.out[,"N", drop = F], out[,"AF",drop=F], tmp.out[,c(bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header,"PVAL.MARGINAL", "PVAL.INT", "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT"), drop=F])
                             write.table(out, paste0(outfile, "_tmp.", b, ".txt"), quote=FALSE, row.names=FALSE,  col.names=FALSE, sep="\t", append=TRUE, na=".")
                         }
                     } else {
                         if (any(include)) {
                             out <- out[include,]
-                            tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL, c("N",   "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.INT", "SW.PVAL.JOINT")))
-                            out <- cbind(out[,c("SNP","CHR","POS","REF","ALT")], tmp.out[,"N", drop = F], out[,"AF",drop=F],   tmp.out[,c( "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.INT", "SW.PVAL.JOINT"), drop = F])
+                            tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL, c("N",   "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT")))
+                            out <- cbind(out[,c("SNP","CHR","POS","REF","ALT")], tmp.out[,"N", drop = F], out[,"AF",drop=F],   tmp.out[,c( "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT"), drop = F])
                             write.table(out, paste0(outfile, "_tmp.", b, ".txt"), quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t", append=TRUE, na=".")
                         }
                     }
@@ -512,10 +530,10 @@ rom = function(null.obj, outfile,
          
          if (is.null(strata.list))
          {
-             totalCol =  10 + 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2 + ei)
+             totalCol =  11 + 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2 + ei)
          }
          else {
-             totalCol =  10 +2*length(unique(strata))+ 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2 + ei)
+             totalCol =  11 +2*length(unique(strata))+ 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2 + ei)
          }
         } else {
          interaction2 <- paste0("G-", interaction[1:ei])
@@ -526,14 +544,14 @@ rom = function(null.obj, outfile,
              meta.header = c(paste0("Beta_", interaction2), paste0("SE_Beta_", interaction2),paste0("Robust_SE_BETA_", interaction2))
          }
          
-         if (is.null(strata.list)) {totalCol = 8 + ei + ei + ei * (ei - 1) / 2 + ei}
-         else {totalCol = 8 +2*length(unique(strata))+ ei + ei + ei * (ei - 1) / 2 + ei}
+         if (is.null(strata.list)) {totalCol = 9 + ei + ei + ei * (ei - 1) / 2 + ei}
+         else {totalCol = 9 +2*length(unique(strata))+ ei + ei + ei * (ei - 1) / 2 + ei}
         }  
  
      if (is.null(strata.list)){
-         write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal", "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), outfile, quote = F, col.names = F, row.names = F, sep="\t")
+         write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal", "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Main", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), outfile, quote = F, col.names = F, row.names = F, sep="\t")
      } else {
-         write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", bin_header, "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal",  "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), outfile, quote = F, col.names = F, row.names = F, sep="\t")
+         write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", bin_header, "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal",  "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Main", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), outfile, quote = F, col.names = F, row.names = F, sep="\t")
      }
 
      debug_file <- paste0(outfile, "_tmp.err")
@@ -704,9 +722,20 @@ rom = function(null.obj, outfile,
           
           
           joint_cov = as.matrix(crossprod(IV.V_i, crossprod(M, IV.V_i)))
-            
+          
+          SE.SW.MAIN = if (ei == 1 & ng == 1) sqrt(joint_cov[1:ng,1:ng]) else sqrt(diag(joint_cov[1:ng,1:ng]))             
           SE.SW.INT = if (ei == 1 & ng == 1) sqrt(joint_cov[ng1:ngei1,ng1:ngei1]) else sqrt(diag(joint_cov[ng1:ngei1,ng1:ngei1]))
+
+
           #SE.SW.JOINT = sqrt(diag(joint_cov))
+
+          joint_cov.G_i <- try(solve(joint_cov[1:ng,1:ng]), silent = TRUE) #4x4
+          if(class(joint_cov.G_i)[1] == "try-error") joint_cov.G_i <- MASS::ginv(joint_cov[1:ng,1:ng])
+                        
+          SW.STAT.MAIN = diag(crossprod(BETA.INT[1:ng,],crossprod(joint_cov.G_i, BETA.INT[1:ng,])))
+          SW.PVAL.MAIN = pchisq(SW.STAT.MAIN, df=ei, lower.tail=FALSE)
+          SW.PVAL.MAIN = ifelse(SW.PVAL.MAIN == 0, NA, SW.PVAL.INT)
+                    
 
           joint_cov.E_i <- try(solve(joint_cov[ng1:ngei1,ng1:ngei1]), silent = TRUE) #4x4
           if(class(joint_cov.E_i)[1] == "try-error") joint_cov.E_i <- MASS::ginv(joint_cov[ng1:ngei1,ng1:ngei1])
@@ -727,8 +756,10 @@ rom = function(null.obj, outfile,
           split_mat <- matrix(1:(ncolE*ncolE), ncolE, ncolE)
           if (ng > 1) {
           IV.V_i <- split(IV.V_i, split_mat %x% diag(ng))[-1]
+          joint_cov <- split(joint_cov, split_mat %x% diag(ng))[-1]
           }else {
           IV.V_i <- split(IV.V_i, split_mat %x% diag(ng))
+          joint_cov <- split(joint_cov, split_mat %x% diag(ng))
           }
           tmp_idx <<- tmp_idx + ng
             
@@ -743,6 +774,7 @@ rom = function(null.obj, outfile,
                                                     PVAL.MAIN, # G Main pval
                                                     PVAL.INT, # GxE pval
                                                     PVAL.JOINT,
+                                                    SW.PVAL.MAIN,
                                                     SW.PVAL.INT, # GxE Robust pval
                                                     SW.PVAL.JOINT)))
                             } else {
@@ -755,6 +787,7 @@ rom = function(null.obj, outfile,
                                                         PVAL.MAIN,
                                                         PVAL.INT,
                                                         PVAL.JOINT,
+                                                        SW.PVAL.MAIN,
                                                         SW.PVAL.INT, # Robust pval
                                                         SW.PVAL.JOINT)))
                                     } else {
@@ -766,6 +799,7 @@ rom = function(null.obj, outfile,
                                                         PVAL.MAIN,
                                                         PVAL.INT,
                                                         PVAL.JOINT,
+                                                        SW.PVAL.MAIN,
                                                         SW.PVAL.INT, # Robust pval
                                                         SW.PVAL.JOINT)))
                                     }
@@ -781,6 +815,7 @@ rom = function(null.obj, outfile,
                                                         PVAL.MAIN,
                                                         PVAL.INT,
                                                         PVAL.JOINT,
+                                                        SW.PVAL.MAIN,
                                                         SW.PVAL.INT, # Robust pval
                                                         SW.PVAL.JOINT)))
                                 } else {
@@ -793,6 +828,7 @@ rom = function(null.obj, outfile,
                                                     PVAL.MAIN, # G Main pval
                                                     PVAL.INT, # GxE pval
                                                     PVAL.JOINT,
+                                                    SW.PVAL.MAIN,
                                                     SW.PVAL.INT, # GxE Robust pval
                                                     SW.PVAL.JOINT)))
                                         } else {
@@ -804,6 +840,7 @@ rom = function(null.obj, outfile,
                                                         PVAL.MAIN,
                                                         PVAL.INT,
                                                         PVAL.JOINT,
+                                                        SW.PVAL.MAIN,
                                                         SW.PVAL.INT, # Robust pval
                                                         SW.PVAL.JOINT)))
                                         }
@@ -817,15 +854,15 @@ rom = function(null.obj, outfile,
         if (!is.null(strata.list)){ ## tbd
                     if (any(include)) {
                             out <- out[include,]
-                            tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL,   c("N", bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.INT", "SW.PVAL.JOINT")))
-                            out <- cbind(out[,c("SNP","CHR","POS","REF","ALT")], tmp.out[,"N", drop = F], out[,"AF",drop=F], tmp.out[,c(bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header,"PVAL.MARGINAL", "PVAL.INT", "PVAL.JOINT", "SW.PVAL.INT", "SW.PVAL.JOINT"), drop=F])
+                            tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL,   c("N", bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT")))
+                            out <- cbind(out[,c("SNP","CHR","POS","REF","ALT")], tmp.out[,"N", drop = F], out[,"AF",drop=F], tmp.out[,c(bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header,"PVAL.MARGINAL", "PVAL.INT", "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT"), drop=F])
                             write.table(out, paste0(outfile, "_tmp.", b, ".txt"), quote=FALSE, row.names=FALSE,  col.names=FALSE, sep="\t", append=TRUE, na=".")
                         }
                 } else {
                     if (any(include)) {
                         out <- out[include,]
-                        tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL, c("N",   "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.INT", "SW.PVAL.JOINT")))
-                        out <- cbind(out[,c("SNP","CHR","POS","REF","ALT")], tmp.out[,"N", drop = F], out[,"AF",drop=F],   tmp.out[,c( "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.INT", "SW.PVAL.JOINT"), drop = F])
+                        tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL, c("N",   "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT")))
+                        out <- cbind(out[,c("SNP","CHR","POS","REF","ALT")], tmp.out[,"N", drop = F], out[,"AF",drop=F],   tmp.out[,c( "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT"), drop = F])
                         write.table(out, outfile, quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t", append=TRUE, na=".")
                     }
                 }
