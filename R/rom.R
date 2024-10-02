@@ -396,7 +396,7 @@ rom = function(null.obj, outfile,
                                                     PVAL.MAIN, # G Main pval
                                                     PVAL.INT, # GxE pval
                                                     PVAL.JOINT,
-                                                    SW.PVAL.MAIN
+                                                    SW.PVAL.MAIN,
                                                     SW.PVAL.INT, # GxE Robust pval
                                                     SW.PVAL.JOINT)))
                             } else {
@@ -409,7 +409,7 @@ rom = function(null.obj, outfile,
                                                         PVAL.MAIN,
                                                         PVAL.INT,
                                                         PVAL.JOINT,
-                                                        SW.PVAL.MAIN
+                                                        SW.PVAL.MAIN,
                                                         SW.PVAL.INT, # Robust pval
                                                         SW.PVAL.JOINT)))
                                     } else {
@@ -421,7 +421,7 @@ rom = function(null.obj, outfile,
                                                         PVAL.MAIN,
                                                         PVAL.INT,
                                                         PVAL.JOINT,
-                                                        SW.PVAL.MAIN
+                                                        SW.PVAL.MAIN,
                                                         SW.PVAL.INT, # Robust pval
                                                         SW.PVAL.JOINT)))
                                     }
@@ -437,7 +437,7 @@ rom = function(null.obj, outfile,
                                                         PVAL.MAIN,
                                                         PVAL.INT,
                                                         PVAL.JOINT,
-                                                        SW.PVAL.MAIN
+                                                        SW.PVAL.MAIN,
                                                         SW.PVAL.INT, # Robust pval
                                                         SW.PVAL.JOINT)))
                                 } else {
@@ -450,7 +450,7 @@ rom = function(null.obj, outfile,
                                                     PVAL.MAIN, # G Main pval
                                                     PVAL.INT, # GxE pval
                                                     PVAL.JOINT,
-                                                    SW.PVAL.MAIN
+                                                    SW.PVAL.MAIN,
                                                     SW.PVAL.INT, # GxE Robust pval
                                                     SW.PVAL.JOINT)))
                                         } else {
@@ -462,7 +462,7 @@ rom = function(null.obj, outfile,
                                                         PVAL.MAIN,
                                                         PVAL.INT,
                                                         PVAL.JOINT,
-                                                        SW.PVAL.MAIN
+                                                        SW.PVAL.MAIN,
                                                         SW.PVAL.INT, # Robust pval
                                                         SW.PVAL.JOINT)))
                                         }
