@@ -144,7 +144,7 @@ rom = function(null.obj, outfile,
         p.percore <- (p.all-1) %/% ncores + 1
         n.p.percore_1 <- p.percore * ncores - p.all
     
-        if (meta.output) { #tbd
+        if (meta.output) {
             interaction2 <- c("G", paste0("G-", interaction))
             cov.header = matrix(paste(rep(paste0("Cov_Beta_", interaction2), each = ncolE), interaction2, sep = "_"),ncolE, ncolE)
             meta.header = c(paste0("Beta_", interaction2), paste0("SE_Beta_", interaction2),cov.header[lower.tri(cov.header)],paste0("Robust_SE_BETA_", interaction2[1:ei]))
@@ -391,7 +391,6 @@ rom = function(null.obj, outfile,
                                                 t(do.call(cbind, lapply(2:ncolE, function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE and then Beta Covariates
                                                 t(sqrt(do.call(cbind, lapply(seq(1,ncolE*ncolE, ncolE+1), function(x) {IV.V_i[[x]]})))),
                                                 t(do.call(cbind, lapply(split_mat[lower.tri(split_mat)], function(x) {IV.V_i[[x]]}))),
-                                                t(matrix(SE.SW.MAIN, ncol = ei)), # G Robust SE
                                                 t(matrix(SE.SW.INT, ncol = ei)), # GxE Robust SE
                                                     PVAL.MAIN, # G Main pval
                                                     PVAL.INT, # GxE pval
@@ -468,21 +467,10 @@ rom = function(null.obj, outfile,
                                         }
                                 }
                         }
-                      
-                        
-                    
-                    
-                    
-                        
-                            
-                            
-                                
-                                                    
-                            
                     })
                 
                 
-                    if (!is.null(strata.list)){ ## tbd
+                    if (!is.null(strata.list)){ 
                         if (any(include)) {
                             out <- out[include,]
                             tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL,   c("N", bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT")))
@@ -523,7 +511,7 @@ rom = function(null.obj, outfile,
         rm(sample.id)
         nbatch.flush <- (p-1) %/% 100000 + 1
         ii <- 0
-        if (meta.output) { #tbd
+        if (meta.output) {
          interaction2 <- c("G", paste0("G-", interaction))
          cov.header = matrix(paste(rep(paste0("Cov_Beta_", interaction2), each = ncolE), interaction2, sep = "_"),ncolE, ncolE)
          meta.header = c(paste0("Beta_", interaction2), paste0("SE_Beta_", interaction2),cov.header[lower.tri(cov.header)], ,paste0("Robust_SE_BETA_", interaction2[1:ei]))
@@ -851,7 +839,7 @@ rom = function(null.obj, outfile,
 
         
 
-        if (!is.null(strata.list)){ ## tbd
+        if (!is.null(strata.list)){ 
                     if (any(include)) {
                             out <- out[include,]
                             tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL,   c("N", bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT")))
