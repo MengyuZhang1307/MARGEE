@@ -147,7 +147,7 @@ rom = function(null.obj, outfile,
         if (meta.output) {
             interaction2 <- c("G", paste0("G-", interaction))
             cov.header = matrix(paste(rep(paste0("Cov_Beta_", interaction2), each = ncolE), interaction2, sep = "_"),ncolE, ncolE)
-            meta.header = c(paste0("Beta_", interaction2), paste0("SE_Beta_", interaction2),cov.header[lower.tri(cov.header)],paste0("Robust_SE_BETA_", interaction2[1:ei]))
+            meta.header = c(paste0("Beta_", interaction2), paste0("SE_Beta_", interaction2),cov.header[lower.tri(cov.header)],paste0("Robust_SE_BETA_", interaction2[2:(1+ei)]))
         
             if (is.null(strata.list))
             {
@@ -514,7 +514,7 @@ rom = function(null.obj, outfile,
         if (meta.output) {
          interaction2 <- c("G", paste0("G-", interaction))
          cov.header = matrix(paste(rep(paste0("Cov_Beta_", interaction2), each = ncolE), interaction2, sep = "_"),ncolE, ncolE)
-         meta.header = c(paste0("Beta_", interaction2), paste0("SE_Beta_", interaction2),cov.header[lower.tri(cov.header)], ,paste0("Robust_SE_BETA_", interaction2[1:ei]))
+         meta.header = c(paste0("Beta_", interaction2), paste0("SE_Beta_", interaction2),cov.header[lower.tri(cov.header)], ,paste0("Robust_SE_BETA_", interaction2[2:(1+ei)]))
          
          if (is.null(strata.list))
          {
