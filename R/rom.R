@@ -46,7 +46,8 @@ rom = function(null.obj, outfile,
     missing.method <- try(match.arg(missing.method, c("impute2mean", "omit")))
     if(inherits(missing.method,"try-error")) stop("Error: \"missing.method\" must be \"impute2mean\" or \"omit\".")
     if(!inherits(interaction, c("integer", "numeric", "character"))) stop("Error: \"interaction\" should be an integer, numeric, or character vector.")
-
+    if(length(related.id) != length(null.obj$id_include)) stop("Error: Cluster ID does not match the length of individual ID")
+    
 
     residuals <- null.obj$scaled.residuals
     ei <- length(interaction)
