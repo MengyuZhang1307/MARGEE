@@ -152,10 +152,10 @@ rom = function(null.obj, outfile,
         
             if (is.null(strata.list))
             {
-                totalCol =  11 + 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2 + ei)
+                totalCol =  13 + 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2 + ei)
             }
             else {
-                totalCol =  11 +2*length(unique(strata))+ 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2 + ei)
+                totalCol =  13 +2*length(unique(strata))+ 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2 + ei)
             }
         } else {
             interaction2 <- paste0("G-", interaction[1:ei])
@@ -166,8 +166,8 @@ rom = function(null.obj, outfile,
                 meta.header = c(paste0("Beta_", interaction2), paste0("SE_Beta_", interaction2),paste0("Robust_SE_BETA_", interaction2))
             }
         
-            if (is.null(strata.list)) {totalCol = 9 + ei + ei + ei * (ei - 1) / 2 + ei }
-            else {totalCol = 9 +2*length(unique(strata))+ ei + ei + ei * (ei - 1) / 2 + ei }
+            if (is.null(strata.list)) {totalCol = 11 + ei + ei + ei * (ei - 1) / 2 + ei }
+            else {totalCol = 11 +2*length(unique(strata))+ ei + ei + ei * (ei - 1) / 2 + ei }
         }
 
         if (is.null(strata.list)){
@@ -522,10 +522,10 @@ rom = function(null.obj, outfile,
          
          if (is.null(strata.list))
          {
-             totalCol =  11 + 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2 + ei)
+             totalCol =  13 + 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2 + ei)
          }
          else {
-             totalCol =  11 +2*length(unique(strata))+ 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2 + ei)
+             totalCol =  13 +2*length(unique(strata))+ 3*(ei+qi) + ((ei+qi) * ((ei+qi) - 1) / 2 + ei)
          }
         } else {
          interaction2 <- paste0("G-", interaction[1:ei])
@@ -536,8 +536,8 @@ rom = function(null.obj, outfile,
              meta.header = c(paste0("Beta_", interaction2), paste0("SE_Beta_", interaction2),paste0("Robust_SE_BETA_", interaction2))
          }
          
-         if (is.null(strata.list)) {totalCol = 9 + ei + ei + ei * (ei - 1) / 2 + ei}
-         else {totalCol = 9 +2*length(unique(strata))+ ei + ei + ei * (ei - 1) / 2 + ei}
+         if (is.null(strata.list)) {totalCol = 11 + ei + ei + ei * (ei - 1) / 2 + ei}
+         else {totalCol = 11 +2*length(unique(strata))+ ei + ei + ei * (ei - 1) / 2 + ei}
         }  
  
      if (is.null(strata.list)){
