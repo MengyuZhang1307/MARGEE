@@ -1027,7 +1027,10 @@ fix.dgesdd <- function(gds, out, debug_file, null.obj, J, residuals, tmp2.varian
 }
 
 
-
+.calc_rsq <- function(x) {
+  m <- mean(x,na.rm=T)/2
+  return(var(x,na.rm=T)/(2*m*(1-m)))
+}
 
 
 
