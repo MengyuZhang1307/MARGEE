@@ -171,9 +171,9 @@ rom = function(null.obj, outfile,
         }
 
         if (is.null(strata.list)){
-            write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal", "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Main", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), outfile, quote = F, col.names = F, row.names = F, sep="\t")
+            write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", "MAC", "RSQ", "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal", "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Main", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), outfile, quote = F, col.names = F, row.names = F, sep="\t")
         } else {
-            write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", bin_header, "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal",  "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Main", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), outfile, quote = F, col.names = F, row.names = F, sep="\t")
+            write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", "MAC", "RSQ", bin_header, "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal",  "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Main", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), outfile, quote = F, col.names = F, row.names = F, sep="\t")
         }
 # b = 1
         foreach(b=1:ncores, .inorder=FALSE, .options.multicore = list(preschedule = FALSE, set.seed = FALSE)) %dopar% {
@@ -229,6 +229,9 @@ rom = function(null.obj, outfile,
                         freq <- colMeans(geno, na.rm = TRUE)/2
                         if(any(duplicated(null.obj$id_include))) geno <- crossprod(J, geno)
                         N <- nrow(geno) - colSums(is.na(geno))
+                        MAC <- colSums(geno, na.rm = TRUE)
+                        MAC[MAC>N] <- (2*N - MAC)[MAC>N]
+                        RSQ <- apply(geno, 2, .calc_rsq)
                         if(!is.null(strata.list)) { # E is not continuous
                             freq.tmp <- sapply(strata.list, function(x) colMeans(geno[x, , drop = FALSE], na.rm = TRUE)/2)
                             if(is.null(ncol(freq.tmp))) freq.tmp <- matrix(freq.tmp, nrow = 1, dimnames = list(NULL, names(freq.tmp)))
@@ -387,7 +390,7 @@ rom = function(null.obj, outfile,
 
                         if (!is.null(strata.list)){
                             if (meta.output) {
-                                return(as.matrix(rbind(N, t(freq_N), BETA.MAIN, SE.MAIN, 
+                                return(as.matrix(rbind(N, MAC, RSQ, t(freq_N), BETA.MAIN, SE.MAIN, 
                                                 diag(as.matrix(BETA.INT[1:ng,])), # Beta G;
                                                 t(do.call(cbind, lapply(2:ncolE, function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE and then Beta Covariates
                                                 t(sqrt(do.call(cbind, lapply(seq(1,ncolE*ncolE, ncolE+1), function(x) {IV.V_i[[x]]})))),
@@ -402,7 +405,7 @@ rom = function(null.obj, outfile,
                             } else {
                                     split_mat <- as.matrix(split_mat[2:(ei+1),2:(ei+1)])
                                     if (length(split_mat) == 1) {
-                                        return(as.matrix(rbind(N, t(freq_N), BETA.MAIN, SE.MAIN,
+                                        return(as.matrix(rbind(N, MAC, RSQ, t(freq_N), BETA.MAIN, SE.MAIN,
                                                         t(do.call(cbind, lapply(2:(ei+1), function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE only
                                                         t(sqrt(do.call(cbind,lapply(diag(split_mat), function(x) {IV.V_i[[x]]})))),   # SE Beta GxE only
                                                         t(matrix(SE.SW.INT, ncol = ei)),
@@ -413,7 +416,7 @@ rom = function(null.obj, outfile,
                                                         SW.PVAL.INT, # Robust pval
                                                         SW.PVAL.JOINT)))
                                     } else {
-                                        return(as.matrix(rbind(N, t(freq_N), BETA.MAIN, SE.MAIN,
+                                        return(as.matrix(rbind(N, MAC, RSQ, t(freq_N), BETA.MAIN, SE.MAIN,
                                                         t(do.call(cbind, lapply(2:(ei+1), function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE only
                                                         t(sqrt(do.call(cbind,lapply(diag(split_mat), function(x) {IV.V_i[[x]]})))),   # SE Beta GxE only
                                                         t(do.call(cbind, lapply(split_mat[lower.tri(split_mat)], function(x) {IV.V_i[[x]]}))),
@@ -428,7 +431,7 @@ rom = function(null.obj, outfile,
                                 }
                         } else {
                             if (meta.output) {
-                                    return(as.matrix(rbind(N,  BETA.MAIN, SE.MAIN, 
+                                    return(as.matrix(rbind(N, MAC, RSQ, BETA.MAIN, SE.MAIN, 
                                                         diag(as.matrix(BETA.INT[1:ng,])), # Beta G;
                                                         t(do.call(cbind, lapply(2:ncolE, function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE and then Beta Covariates
                                                         t(sqrt(do.call(cbind, lapply(seq(1,ncolE*ncolE, ncolE+1), function(x) {IV.V_i[[x]]})))),
@@ -443,7 +446,7 @@ rom = function(null.obj, outfile,
                                 } else {
                                     split_mat = as.matrix(split_mat[2:(ei+1),2:(ei+1)])
                                     if (length(split_mat) == 1) {
-                                        return(as.matrix(rbind(N,BETA.MAIN, SE.MAIN,
+                                        return(as.matrix(rbind(N,MAC, RSQ, BETA.MAIN, SE.MAIN,
                                                     t(do.call(cbind, lapply(2:(ei+1), function(x){diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxEonly 101:200
                                                     t(sqrt(do.call(cbind,lapply(diag(split_mat),function(x) {IV.V_i[[x]]})))),   # SE Beta GxEonly
                                                     t(matrix(SE.SW.INT, ncol = ei)), # GxE Robust SE
@@ -454,7 +457,7 @@ rom = function(null.obj, outfile,
                                                     SW.PVAL.INT, # GxE Robust pval
                                                     SW.PVAL.JOINT)))
                                         } else {
-                                            return(as.matrix(rbind(N, BETA.MAIN, SE.MAIN,
+                                            return(as.matrix(rbind(N, MAC, RSQ, BETA.MAIN, SE.MAIN,
                                                         t(do.call(cbind, lapply(2:(ei+1), function(x){diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxEonly
                                                         t(sqrt(do.call(cbind,lapply(diag(split_mat),function(x) {IV.V_i[[x]]})))),   # SE BetaGxE only
                                                         t(do.call(cbind,lapply(split_mat[lower.tri(split_mat)],function(x) {IV.V_i[[x]]}))),
@@ -474,15 +477,15 @@ rom = function(null.obj, outfile,
                     if (!is.null(strata.list)){ 
                         if (any(include)) {
                             out <- out[include,]
-                            tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL,   c("N", bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT")))
-                            out <- cbind(out[,c("SNP","CHR","POS","REF","ALT")], tmp.out[,"N", drop = F], out[,"AF",drop=F], tmp.out[,c(bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header,"PVAL.MARGINAL", "PVAL.INT", "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT"), drop=F])
+                            tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL,   c("N", "MAC", "RSQ", bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT")))
+                            out <- cbind(out[,c("SNP","CHR","POS","REF","ALT")], tmp.out[,"N", drop = F], out[,"AF",drop=F], tmp.out[,c("MAC", "RSQ", bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header,"PVAL.MARGINAL", "PVAL.INT", "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT"), drop=F])
                             write.table(out, paste0(outfile, "_tmp.", b, ".txt"), quote=FALSE, row.names=FALSE,  col.names=FALSE, sep="\t", append=TRUE, na=".")
                         }
                     } else {
                         if (any(include)) {
                             out <- out[include,]
-                            tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL, c("N",   "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT")))
-                            out <- cbind(out[,c("SNP","CHR","POS","REF","ALT")], tmp.out[,"N", drop = F], out[,"AF",drop=F],   tmp.out[,c( "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT"), drop = F])
+                            tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL, c("N", "MAC", "RSQ", "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT")))
+                            out <- cbind(out[,c("SNP","CHR","POS","REF","ALT")], tmp.out[,"N", drop = F], out[,"AF",drop=F],   tmp.out[,c("MAC", "RSQ", "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT"), drop = F])
                             write.table(out, paste0(outfile, "_tmp.", b, ".txt"), quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t", append=TRUE, na=".")
                         }
                     }
@@ -538,9 +541,9 @@ rom = function(null.obj, outfile,
         }  
  
      if (is.null(strata.list)){
-         write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal", "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Main", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), outfile, quote = F, col.names = F, row.names = F, sep="\t")
+         write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", "MAC", "RSQ", "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal", "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Main", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), outfile, quote = F, col.names = F, row.names = F, sep="\t")
      } else {
-         write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", bin_header, "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal",  "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Main", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), outfile, quote = F, col.names = F, row.names = F, sep="\t")
+         write.table(t(data.frame(n = c("SNPID","CHR","POS","Non_Effect_Allele","Effect_Allele", "N_Sample", "AF", "MAC", "RSQ", bin_header, "Beta_Marginal", "SE_Beta_Marginal", meta.header, "P_Value_Marginal",  "P_Value_Interaction", "P_Value_Joint", "Robust_P_Value_Main", "Robust_P_Value_Interaction", "Robust_P_Value_Joint"))), outfile, quote = F, col.names = F, row.names = F, sep="\t")
      }
 
      debug_file <- paste0(outfile, "_tmp.err")
@@ -754,7 +757,7 @@ rom = function(null.obj, outfile,
             
           if (!is.null(strata.list)){
                             if (meta.output) {
-                                return(as.matrix(rbind(N, t(freq_N), BETA.MAIN, SE.MAIN, 
+                                return(as.matrix(rbind(N, MAC, RSQ, t(freq_N), BETA.MAIN, SE.MAIN, 
                                                 diag(as.matrix(BETA.INT[1:ng,])), # Beta G;
                                                 t(do.call(cbind, lapply(2:ncolE, function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE and then Beta Covariates
                                                 t(sqrt(do.call(cbind, lapply(seq(1,ncolE*ncolE, ncolE+1), function(x) {IV.V_i[[x]]})))),
@@ -769,7 +772,7 @@ rom = function(null.obj, outfile,
                             } else {
                                     split_mat <- as.matrix(split_mat[2:(ei+1),2:(ei+1)])
                                     if (length(split_mat) == 1) {
-                                        return(as.matrix(rbind(N, t(freq_N), BETA.MAIN, SE.MAIN,
+                                        return(as.matrix(rbind(N, MAC, RSQ, t(freq_N), BETA.MAIN, SE.MAIN,
                                                         t(do.call(cbind, lapply(2:(ei+1), function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE only
                                                         t(sqrt(do.call(cbind,lapply(diag(split_mat), function(x) {IV.V_i[[x]]})))),   # SE Beta GxE only
                                                         t(matrix(SE.SW.INT, ncol = ei)),
@@ -780,7 +783,7 @@ rom = function(null.obj, outfile,
                                                         SW.PVAL.INT, # Robust pval
                                                         SW.PVAL.JOINT)))
                                     } else {
-                                        return(as.matrix(rbind(N, t(freq_N), BETA.MAIN, SE.MAIN,
+                                        return(as.matrix(rbind(N, MAC, RSQ, t(freq_N), BETA.MAIN, SE.MAIN,
                                                         t(do.call(cbind, lapply(2:(ei+1), function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE only
                                                         t(sqrt(do.call(cbind,lapply(diag(split_mat), function(x) {IV.V_i[[x]]})))),   # SE Beta GxE only
                                                         t(do.call(cbind, lapply(split_mat[lower.tri(split_mat)], function(x) {IV.V_i[[x]]}))),
@@ -795,7 +798,7 @@ rom = function(null.obj, outfile,
                                 }
                         } else {
                             if (meta.output) {
-                                    return(as.matrix(rbind(N,  BETA.MAIN, SE.MAIN, 
+                                    return(as.matrix(rbind(N,  MAC, RSQ, BETA.MAIN, SE.MAIN, 
                                                         diag(as.matrix(BETA.INT[1:ng,])), # Beta G;
                                                         t(do.call(cbind, lapply(2:ncolE, function(x) {diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxE and then Beta Covariates
                                                         t(sqrt(do.call(cbind, lapply(seq(1,ncolE*ncolE, ncolE+1), function(x) {IV.V_i[[x]]})))),
@@ -810,7 +813,7 @@ rom = function(null.obj, outfile,
                                 } else {
                                     split_mat = as.matrix(split_mat[2:(ei+1),2:(ei+1)])
                                     if (length(split_mat) == 1) {
-                                        return(as.matrix(rbind(N,BETA.MAIN, SE.MAIN,
+                                        return(as.matrix(rbind(N,MAC, RSQ, BETA.MAIN, SE.MAIN,
                                                     t(do.call(cbind, lapply(2:(ei+1), function(x){diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxEonly 101:200
                                                     t(sqrt(do.call(cbind,lapply(diag(split_mat),function(x) {IV.V_i[[x]]})))),   # SE Beta GxEonly
                                                     t(matrix(SE.SW.INT, ncol = ei)), # GxE Robust SE
@@ -821,7 +824,7 @@ rom = function(null.obj, outfile,
                                                     SW.PVAL.INT, # GxE Robust pval
                                                     SW.PVAL.JOINT)))
                                         } else {
-                                            return(as.matrix(rbind(N, BETA.MAIN, SE.MAIN,
+                                            return(as.matrix(rbind(N, MAC, RSQ, BETA.MAIN, SE.MAIN,
                                                         t(do.call(cbind, lapply(2:(ei+1), function(x){diag(as.matrix(BETA.INT[(((x-1)*ng)+1):(ng*x),]))}))), # Beta GxEonly
                                                         t(sqrt(do.call(cbind,lapply(diag(split_mat),function(x) {IV.V_i[[x]]})))),   # SE BetaGxE only
                                                         t(do.call(cbind,lapply(split_mat[lower.tri(split_mat)],function(x) {IV.V_i[[x]]}))),
@@ -843,15 +846,15 @@ rom = function(null.obj, outfile,
         if (!is.null(strata.list)){ 
                     if (any(include)) {
                             out <- out[include,]
-                            tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL,   c("N", bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT")))
-                            out <- cbind(out[,c("SNP","CHR","POS","REF","ALT")], tmp.out[,"N", drop = F], out[,"AF",drop=F], tmp.out[,c(bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header,"PVAL.MARGINAL", "PVAL.INT", "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT"), drop=F])
+                            tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL,   c("N", "MAC", "RSQ", bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT")))
+                            out <- cbind(out[,c("SNP","CHR","POS","REF","ALT")], tmp.out[,"N", drop = F], out[,"AF",drop=F], tmp.out[,c("MAC", "RSQ", bin_header, "BETA.MARGINAL", "SE.MARGINAL", meta.header,"PVAL.MARGINAL", "PVAL.INT", "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT"), drop=F])
                             write.table(out, paste0(outfile, "_tmp.", b, ".txt"), quote=FALSE, row.names=FALSE,  col.names=FALSE, sep="\t", append=TRUE, na=".")
                         }
                 } else {
                     if (any(include)) {
                         out <- out[include,]
-                        tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL, c("N",   "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT")))
-                        out <- cbind(out[,c("SNP","CHR","POS","REF","ALT")], tmp.out[,"N", drop = F], out[,"AF",drop=F],   tmp.out[,c( "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT"), drop = F])
+                        tmp.out <- matrix(unlist(tmp.out), ncol = totalCol, byrow = TRUE, dimnames = list(NULL, c("N",   "MAC", "RSQ", "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT")))
+                        out <- cbind(out[,c("SNP","CHR","POS","REF","ALT")], tmp.out[,"N", drop = F], out[,"AF",drop=F],   tmp.out[,c( "MAC", "RSQ", "BETA.MARGINAL", "SE.MARGINAL", meta.header, "PVAL.MARGINAL", "PVAL.INT",   "PVAL.JOINT", "SW.PVAL.MAIN", "SW.PVAL.INT", "SW.PVAL.JOINT"), drop = F])
                         write.table(out, outfile, quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t", append=TRUE, na=".")
                     }
                 }
