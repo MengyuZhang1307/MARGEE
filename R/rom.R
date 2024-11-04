@@ -591,6 +591,9 @@ rom = function(null.obj, outfile,
         if(any(duplicated(null.obj$id_include))) geno <- crossprod(J, geno)
 
         N <- nrow(geno) - colSums(is.na(geno))
+        MAC <- colSums(geno, na.rm = TRUE)
+        MAC[MAC>N] <- (2*N - MAC)[MAC>N]
+        RSQ <- apply(geno, 2, .calc_rsq)
         if(!is.null(strata.list)) { # E is not continuous
             freq.tmp <- sapply(strata.list, function(x) colMeans(geno[x, , drop = FALSE], na.rm = TRUE)/2)
             if(is.null(ncol(freq.tmp))) freq.tmp <- matrix(freq.tmp, nrow = 1, dimnames = list(NULL, names(freq.tmp)))
